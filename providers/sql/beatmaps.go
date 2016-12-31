@@ -3,8 +3,8 @@ package sql
 import (
 	"database/sql"
 
-	"github.com/osuripple/cheesegull"
 	"github.com/jmoiron/sqlx"
+	"github.com/osuripple/cheesegull"
 )
 
 func (p *provider) Beatmaps(beatmapIDs ...int) ([]cheesegull.Beatmap, error) {
