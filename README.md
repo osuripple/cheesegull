@@ -1,6 +1,6 @@
-# CheeseGull
+<p align="center"><img src="https://y.zxq.co/jobeei.png"></p>
 
-[ mascotte will go here once the guy on Fiverr does it ]
+----------
 
 CheeseGull is the second version of the osu! mirror for Ripple. CheeseGull aims
 to be **THE** mirror. This means that it will eventually have everything you
