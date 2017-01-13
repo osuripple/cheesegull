@@ -5,7 +5,7 @@ import (
 	"io"
 
 	"github.com/osuripple/cheesegull"
-	"github.com/osuripple/cheesegull/providers/fileplacers"
+	"github.com/osuripple/cheesegull/providers/fileresolvers"
 )
 
 // Worker is an instance that will download beatmaps as soon as they arrive down
@@ -40,14 +40,14 @@ func (a *App) Update(s cheesegull.BeatmapSet) error {
 		return err
 	}
 
-	if a.FilePlacer == nil {
-		a.FilePlacer = fileplacers.FileSystem{}
+	if a.FileResolver == nil {
+		a.FileResolver = fileresolvers.FileSystem{}
 	}
 
 	s.HasVideo = noVideo != nil
 
 	if normal != nil {
-		w, err := a.FilePlacer.Create(s.SetID, false)
+		w, err := a.FileResolver.Create(s.SetID, false)
 		defer w.Close()
 		if err != nil {
 			return err
@@ -55,7 +55,7 @@ func (a *App) Update(s cheesegull.BeatmapSet) error {
 		io.Copy(w, normal)
 	}
 	if noVideo != nil {
-		w, err := a.FilePlacer.Create(s.SetID, true)
+		w, err := a.FileResolver.Create(s.SetID, true)
 		defer w.Close()
 		if err != nil {
 			return err

@@ -13,6 +13,7 @@ import (
 // Options are the settings that can be passed to NewServer.
 type Options struct {
 	BeatmapService cheesegull.BeatmapService
+	FileResolver   cheesegull.FileResolver
 }
 
 // NewServer creates a new HTTP server for CheeseGull.
@@ -23,7 +24,7 @@ func NewServer(o Options) http.Handler {
 	r.GET("/b/:id", o.requestWrapper(old.Beatmap))
 	r.GET("/index_md5.txt", o.requestWrapper(old.IndexMD5))
 	r.GET("/index.json", o.requestWrapper(old.IndexJSON))
-	// r.NotFound
+	r.NotFound = _handler{o}
 
 	return r
 }
@@ -33,6 +34,7 @@ func (o Options) requestWrapper(a func(w http.ResponseWriter, r *http.Request, c
 		a(w, r, &ctx.Context{
 			Params:         p,
 			BeatmapService: o.BeatmapService,
+			FileResolver:   o.FileResolver,
 		})
 	}
 }

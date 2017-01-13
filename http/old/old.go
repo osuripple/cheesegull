@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
-
 	"strings"
 
 	"github.com/osuripple/cheesegull"

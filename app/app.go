@@ -14,7 +14,7 @@ type App struct {
 	Downloader cheesegull.BeatmapDownloader
 	Source     cheesegull.BeatmapInfoSource
 	Service    cheesegull.BeatmapService
-	FilePlacer cheesegull.FilePlacer
+	FileResolver cheesegull.FileResolver
 	// handles non-critical errors
 	ErrorHandler func(err error)
 	download     chan cheesegull.BeatmapSet

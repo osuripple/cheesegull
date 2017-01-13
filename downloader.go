@@ -20,10 +20,11 @@ type BeatmapDownloader interface {
 // means that the beatmap probably got removed.
 var ErrNoRedirect = errors.New("no redirect happened, beatmap could not be downloaded")
 
-// FilePlacer is an interface with the task to create an io.Writer in which to
+// FileResolver is an interface with the task to create an io.Writer in which to
 // save the beatmap file. Generally, this would just be a wrapper around
 // os.Create, os.Stat, and a few sanity checks to check the destination exists.
-type FilePlacer interface {
+type FileResolver interface {
 	Create(n int, noVideo bool) (io.WriteCloser, error)
+	Open(n int, noVideo bool) (io.ReadCloser, error)
 	Resolve(n int, noVideo bool) string
 }

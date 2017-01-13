@@ -11,6 +11,7 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/osuripple/cheesegull"
 	"github.com/osuripple/cheesegull/http"
+	"github.com/osuripple/cheesegull/providers/fileresolvers"
 	"github.com/osuripple/cheesegull/providers/sql"
 	cli "gopkg.in/urfave/cli.v2"
 )
@@ -64,6 +65,7 @@ func execute(c *cli.Context) error {
 
 	serv := http.NewServer(http.Options{
 		BeatmapService: prov,
+		FileResolver:   fileresolvers.FileSystem{},
 	})
 
 	return nhttp.ListenAndServe(port, serv)

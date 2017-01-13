@@ -13,7 +13,7 @@ import (
 	"github.com/osuripple/cheesegull"
 	"github.com/osuripple/cheesegull/app"
 	"github.com/osuripple/cheesegull/downloader"
-	"github.com/osuripple/cheesegull/providers/fileplacers"
+	"github.com/osuripple/cheesegull/providers/fileresolvers"
 	"github.com/osuripple/cheesegull/providers/sql"
 	osuapi "gopkg.in/thehowl/go-osuapi.v1"
 	cli "gopkg.in/urfave/cli.v2"
@@ -96,7 +96,7 @@ func execute(c *cli.Context) error {
 	if err != nil {
 		return err
 	}
-	fp := fileplacers.FileSystem{}
+	fp := fileresolvers.FileSystem{}
 	api := osuapi.NewClient(osuAPIKey)
 	if err := api.Test(); err != nil {
 		return err
@@ -105,7 +105,7 @@ func execute(c *cli.Context) error {
 	a := &app.App{
 		Downloader: d,
 		Service:    prov,
-		FilePlacer: fp,
+		FileResolver: fp,
 		Source:     api,
 		ErrorHandler: func(err error) {
 			fmt.Println(err)

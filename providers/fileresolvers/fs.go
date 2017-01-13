@@ -1,4 +1,4 @@
-package fileplacers
+package fileresolvers
 
 import (
 	"io"
@@ -6,7 +6,7 @@ import (
 	"strconv"
 )
 
-// FileSystem is a FilePlacer that acts on the filesystem.
+// FileSystem is a FileResolver that acts on the filesystem.
 type FileSystem struct {
 	Prefix *string
 }
@@ -20,6 +20,15 @@ func (f FileSystem) Create(n int, noVideo bool) (io.WriteCloser, error) {
 			return nil, err
 		}
 		return os.Create(f.Resolve(n, noVideo))
+	}
+	return file, err
+}
+
+// Open opens a file of the mirror in the filesystem to read its content.
+func (f FileSystem) Open(n int, noVideo bool) (io.ReadCloser, error) {
+	file, err := os.Open(f.Resolve(n, noVideo))
+	if os.IsNotExist(err) {
+		return nil, nil
 	}
 	return file, err
 }
