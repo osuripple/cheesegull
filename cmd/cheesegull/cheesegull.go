@@ -1,6 +1,6 @@
 // cheesegull is the main application binary of CheeseGull. Its intent is to
 // function as an osu! beatmap mirror, fetching beatmaps from the osu! website
-// and API, and saving those in a MySQL database.
+// and API, and saving those in a MySQL database. And doing it well.
 package main
 
 import (
@@ -19,7 +19,7 @@ import (
 	cli "gopkg.in/urfave/cli.v2"
 )
 
-// set tings variables
+// settings variables
 var (
 	mysqlDSN           string
 	osuUsername        string
