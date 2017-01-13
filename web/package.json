@@ -1,0 +1,18 @@
+{
+  "private": true,
+  "name": "web",
+  "scripts": {
+    "dev": "vbuild --dev",
+    "build": "vbuild"
+  },
+  "dependencies": {
+    "normalize.css": "^5.0.0",
+    "vue": "2.1.5",
+    "vue-router": "^2.1.1"
+  },
+  "devDependencies": {
+    "pug": "^2.0.0-beta6",
+    "vue-loader": "10.0.2",
+    "vue-template-compiler": "2.1.5"
+  }
+}
