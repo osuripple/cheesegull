@@ -12,6 +12,8 @@ import (
 	"net/http/cookiejar"
 	"net/url"
 	"strconv"
+
+	"github.com/osuripple/cheesegull"
 )
 
 // LogIn logs in into an osu! account and returns a Client.
@@ -78,8 +80,6 @@ func (c *Client) Download(setID int) (io.Reader, io.Reader, error) {
 	return r, nil, err
 }
 
-var errNoRedirect = errors.New("downloader: no redirect happened, beatmap could not be downloaded")
-
 func (c *Client) getReader(str string) (io.Reader, error) {
 	h := (*http.Client)(c)
 
@@ -88,7 +88,7 @@ func (c *Client) getReader(str string) (io.Reader, error) {
 		return nil, err
 	}
 	if resp.Request.URL.Host == "osu.ppy.sh" {
-		return nil, errNoRedirect
+		return nil, cheesegull.ErrNoRedirect
 	}
 
 	return resp.Body, nil

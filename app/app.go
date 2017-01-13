@@ -44,6 +44,10 @@ func (a *App) Start(n int) error {
 		if len(sets) == chunkSize {
 			offset += chunkSize
 		} else {
+			err := a.discoverNew()
+			if err != nil {
+				return err
+			}
 			// repeat from the beginning
 			offset = 0
 		}

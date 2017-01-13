@@ -1,6 +1,7 @@
 package app
 
 import (
+	"fmt"
 	"io"
 
 	"github.com/osuripple/cheesegull"
@@ -27,8 +28,15 @@ func (a *App) Worker() {
 
 // Update takes care of updating a beatmap to the latest version.
 func (a *App) Update(s cheesegull.BeatmapSet) error {
+	fmt.Println("Updating", s.SetID, "...")
 	normal, noVideo, err := a.Downloader.Download(s.SetID)
 	if err != nil {
+		// In the case of ErrNoRedirect, we should simply stop downloading,
+		// there's no need to return the error because it is known and common
+		// and to be expected.
+		if err == cheesegull.ErrNoRedirect {
+			return nil
+		}
 		return err
 	}
 
@@ -54,6 +62,8 @@ func (a *App) Update(s cheesegull.BeatmapSet) error {
 		}
 		io.Copy(w, noVideo)
 	}
+
+	fmt.Println("Finished updating", s.SetID)
 
 	// we need to update hasVideo
 	return a.Service.CreateSet(s)

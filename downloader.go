@@ -1,6 +1,9 @@
 package cheesegull
 
-import "io"
+import (
+	"errors"
+	"io"
+)
 
 // BeatmapDownloader is an interface with the task to fetch a beatmap from a
 // source.
@@ -11,6 +14,11 @@ import "io"
 type BeatmapDownloader interface {
 	Download(setID int) (io.Reader, io.Reader, error)
 }
+
+// ErrNoRedirect is the error to return when the beatmap, while it is on the
+// Source and has a beatmap page, does not actually have a download link, which
+// means that the beatmap probably got removed.
+var ErrNoRedirect = errors.New("no redirect happened, beatmap could not be downloaded")
 
 // FilePlacer is an interface with the task to create an io.Writer in which to
 // save the beatmap file. Generally, this would just be a wrapper around

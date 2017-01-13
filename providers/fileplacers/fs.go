@@ -30,7 +30,7 @@ func (f FileSystem) Resolve(n int, noVideo bool) string {
 	if noVideo {
 		pf = "n"
 	}
-	return f.prefix() + strconv.Itoa(n) + pf
+	return f.prefix() + strconv.Itoa(n) + pf + ".osz"
 }
 
 const defaultPrefix = "data/"

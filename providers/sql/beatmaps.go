@@ -50,7 +50,7 @@ var sortingSystems = [...]string{
 	"SELECT " + setsFields + " ORDER BY s.last_checked DESC LIMIT %d, %d",
 }
 
-func (p *provider) ChunkOfSets(offset, chunk, sortSystem int) ([]hanayo.BeatmapSet, error) {
+func (p *provider) ChunkOfSets(offset, chunk, sortSystem int) ([]cheesegull.BeatmapSet, error) {
 	q := fmt.Sprintf(sortingSystems[sortSystem], offset, chunk)
 	rows, err := p.db.Query(q)
 	if err != nil {

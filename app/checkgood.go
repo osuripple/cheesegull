@@ -25,6 +25,7 @@ func (a *App) CheckGood(s *cheesegull.BeatmapSet) (bool, error) {
 
 	// Update beatmap
 	s.InheritFromOsuSet(beatmaps, true)
+	s.LastChecked = time.Now()
 	err = a.Service.CreateSet(*s)
 
 	return beatmaps[0].LastUpdate.GetTime().Equal(s.LastUpdate), nil
