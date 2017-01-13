@@ -11,3 +11,11 @@ import "io"
 type BeatmapDownloader interface {
 	Download(setID int) (io.Reader, io.Reader, error)
 }
+
+// FilePlacer is an interface with the task to create an io.Writer in which to
+// save the beatmap file. Generally, this would just be a wrapper around
+// os.Create, os.Stat, and a few sanity checks to check the destination exists.
+type FilePlacer interface {
+	Create(n int, noVideo bool) (io.WriteCloser, error)
+	Resolve(n int, noVideo bool) string
+}

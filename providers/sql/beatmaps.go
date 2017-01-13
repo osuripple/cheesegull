@@ -2,6 +2,7 @@ package sql
 
 import (
 	"database/sql"
+	"fmt"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/osuripple/cheesegull"
@@ -38,6 +39,20 @@ func (p *provider) BeatmapSets(sets ...int) ([]cheesegull.BeatmapSet, error) {
 		return nil, err
 	}
 	rows, err := p.db.Query(q, a...)
+	if err != nil {
+		return nil, err
+	}
+	return p.sets(rows)
+}
+
+var sortingSystems = [...]string{
+	// SortLastChecked
+	"SELECT " + setsFields + " ORDER BY s.last_checked DESC LIMIT %d, %d",
+}
+
+func (p *provider) ChunkOfSets(offset, chunk, sortSystem int) ([]hanayo.BeatmapSet, error) {
+	q := fmt.Sprintf(sortingSystems[sortSystem], offset, chunk)
+	rows, err := p.db.Query(q)
 	if err != nil {
 		return nil, err
 	}
@@ -92,6 +107,14 @@ RowLoop:
 		bms = append(bms, s)
 	}
 	return bms, nil
+}
+
+func (p *provider) HighestBeatmapSetID() (i int, err error) {
+	err = p.db.Get(&i, "SELECT set_id FROM sets ORDER BY set_id DESC LIMIT 1")
+	if err == sql.ErrNoRows {
+		err = nil
+	}
+	return
 }
 
 func (p *provider) CreateSet(s cheesegull.BeatmapSet) error {
