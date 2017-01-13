@@ -1,3 +1,6 @@
+// cheesegull is the main application binary of CheeseGull. Its intent is to
+// function as an osu! beatmap mirror, fetching beatmaps from the osu! website
+// and API, and saving those in a MySQL database.
 package main
 
 import (
