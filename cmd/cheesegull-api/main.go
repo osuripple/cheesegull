@@ -113,5 +113,7 @@ func execute(c *cli.Context) error {
 		APISecret:      sec,
 	})
 
+	fmt.Println("Listening on", port)
+
 	return nhttp.ListenAndServe(port, serv)
 }

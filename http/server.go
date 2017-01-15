@@ -6,6 +6,7 @@ import (
 
 	"github.com/julienschmidt/httprouter"
 	"github.com/osuripple/cheesegull"
+	"github.com/osuripple/cheesegull/http/api"
 	"github.com/osuripple/cheesegull/http/ctx"
 	"github.com/osuripple/cheesegull/http/old"
 )
@@ -26,6 +27,7 @@ func NewServer(o Options) http.Handler {
 	r.GET("/b/:id", o.requestWrapper(old.Beatmap))
 	r.GET("/index_md5.txt", o.requestWrapper(old.IndexMD5))
 	r.GET("/index.json", o.requestWrapper(old.IndexJSON))
+	r.POST("/api/request", o.requestWrapperRestr(api.RequestBeatmap))
 	r.NotFound = _handler{o}
 
 	return r
@@ -33,10 +35,31 @@ func NewServer(o Options) http.Handler {
 
 func (o Options) requestWrapper(a func(w http.ResponseWriter, r *http.Request, c *ctx.Context)) func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 	return func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
-		a(w, r, &ctx.Context{
-			Params:         p,
-			BeatmapService: o.BeatmapService,
-			FileResolver:   o.FileResolver,
-		})
+		o.req(a, w, r, p)
 	}
+}
+
+// basically the same but checks if APISecret is passed and is valid
+func (o Options) requestWrapperRestr(a func(w http.ResponseWriter, r *http.Request, c *ctx.Context)) func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+	return func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+		switch o.APISecret {
+		case
+			r.URL.Query().Get("k"),
+			r.Header.Get("Api-Secret"),
+			r.Header.Get("Authorization"):
+			o.req(a, w, r, p)
+		default:
+			w.WriteHeader(403)
+			w.Write([]byte("Forbidden"))
+		}
+	}
+}
+
+func (o Options) req(a func(w http.ResponseWriter, r *http.Request, c *ctx.Context), w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+	a(w, r, &ctx.Context{
+		Params:         p,
+		BeatmapService: o.BeatmapService,
+		FileResolver:   o.FileResolver,
+		Communication:  o.Communication,
+	})
 }

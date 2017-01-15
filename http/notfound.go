@@ -13,10 +13,7 @@ type _handler struct {
 }
 
 func (h _handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	notFoundHandler(w, r, &ctx.Context{
-		BeatmapService: h.o.BeatmapService,
-		FileResolver:   h.o.FileResolver,
-	})
+	h.o.req(notFoundHandler, w, r, nil)
 }
 
 // Yes, I should probably use some better validation for this but can't be

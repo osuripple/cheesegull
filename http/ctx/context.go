@@ -14,6 +14,7 @@ type Context struct {
 	Params         httprouter.Params
 	BeatmapService cheesegull.BeatmapService
 	FileResolver   cheesegull.FileResolver
+	Communication  cheesegull.CommunicationService
 	ErrorHandler   func(error)
 }
 
