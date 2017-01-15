@@ -91,6 +91,12 @@
 			"path": "gopkg.in/urfave/cli.v2",
 			"revision": "e485446237011b8abac93919242e6f059ad56c87",
 			"revisionTime": "2016-10-29T22:39:47Z"
+		},
+		{
+			"checksumSHA1": "j1e4HKzfnOkLPeDhl8Z9vhqyMY4=",
+			"path": "zxq.co/x/rs",
+			"revision": "8b39b068a1555d73f1d83bf3f8319b9b1436fe06",
+			"revisionTime": "2016-09-12T14:40:10Z"
 		}
 	],
 	"rootPath": "github.com/osuripple/cheesegull"
