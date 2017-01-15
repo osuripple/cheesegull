@@ -86,6 +86,10 @@ func (a *App) discoverNew() error {
 	if err != nil {
 		return err
 	}
+	i -= 5000
+	if i < 1 {
+		i = 1
+	}
 	// number of consecutive beatmaps not found
 	var notFound int
 	for {
