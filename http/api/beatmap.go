@@ -1,21 +1,12 @@
 package api
 
 import (
-	"encoding/json"
-	"fmt"
 	"net/http"
 	"strconv"
 
 	"github.com/osuripple/cheesegull"
 	"github.com/osuripple/cheesegull/http/ctx"
 )
-
-type _base struct {
-	Ok      bool
-	Message string `json:",omitempty"`
-}
-
-const aec = "An error occurred."
 
 type rbResponse struct {
 	_base
@@ -36,8 +27,7 @@ func RequestBeatmap(w http.ResponseWriter, r *http.Request, c *ctx.Context) {
 	err := c.Communication.SendBeatmapRequest(i)
 	if err != nil {
 		c.HandleError(err)
-		resp.Message = aec
-		j(w, 500, resp)
+		j(w, 500, aec)
 		return
 	}
 
@@ -53,10 +43,34 @@ func RequestBeatmap(w http.ResponseWriter, r *http.Request, c *ctx.Context) {
 	j(w, 200, resp)
 }
 
-// j writes JSON to the response writer
-func j(w http.ResponseWriter, code int, obj interface{}) {
-	err := json.NewEncoder(w).Encode(obj)
-	if err != nil {
-		fmt.Println(err)
+type searchResponse struct {
+	_base
+	Sets []cheesegull.BeatmapSet
+}
+
+// Search searches in the beatmaps.
+func Search(w http.ResponseWriter, r *http.Request, c *ctx.Context) {
+	amt := c.QueryIntDefault("amount", 50)
+	if amt < 0 {
+		amt = 0
 	}
+	if amt > 100 {
+		amt = 100
+	}
+	sets, err := c.BeatmapService.SearchSets(cheesegull.SearchOptions{
+		Status: c.QueryIntMultiple("status"),
+		Mode:   c.QueryIntMultiple("mode"),
+		Query:  r.URL.Query().Get("query"),
+		Amount: amt,
+		Offset: c.QueryInt("offset"),
+	})
+	if err != nil {
+		c.HandleError(err)
+		j(w, 500, aec)
+		return
+	}
+	resp := searchResponse{}
+	resp.Ok = true
+	resp.Sets = sets
+	j(w, 200, resp)
 }

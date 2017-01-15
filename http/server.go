@@ -23,12 +23,18 @@ type Options struct {
 func NewServer(o Options) http.Handler {
 	r := httprouter.New()
 
+	r.GET("/", func(w http.ResponseWriter, _ *http.Request, _ httprouter.Params) {
+		w.Write([]byte("CheeseGull API " + cheesegull.Version + "\n" +
+			"For more information, check out: https://github.com/osuripple/cheesegull"))
+	})
+
 	r.GET("/s/:id", o.requestWrapper(old.BeatmapSet))
 	r.GET("/b/:id", o.requestWrapper(old.Beatmap))
 	r.GET("/index_md5.txt", o.requestWrapper(old.IndexMD5))
 	r.GET("/index.json", o.requestWrapper(old.IndexJSON))
 
 	r.POST("/api/request", o.requestWrapperRestr(api.RequestBeatmap))
+	r.GET("/api/search", o.requestWrapper(api.Search))
 	r.GET("/api/s/:id", o.requestWrapper(old.BeatmapSet))
 	r.GET("/api/b/:id", o.requestWrapper(old.Beatmap))
 
@@ -65,5 +71,6 @@ func (o Options) req(a func(w http.ResponseWriter, r *http.Request, c *ctx.Conte
 		BeatmapService: o.BeatmapService,
 		FileResolver:   o.FileResolver,
 		Communication:  o.Communication,
+		Request:        r,
 	})
 }
