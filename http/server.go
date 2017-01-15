@@ -27,7 +27,11 @@ func NewServer(o Options) http.Handler {
 	r.GET("/b/:id", o.requestWrapper(old.Beatmap))
 	r.GET("/index_md5.txt", o.requestWrapper(old.IndexMD5))
 	r.GET("/index.json", o.requestWrapper(old.IndexJSON))
+
 	r.POST("/api/request", o.requestWrapperRestr(api.RequestBeatmap))
+	r.GET("/api/s/:id", o.requestWrapper(old.BeatmapSet))
+	r.GET("/api/b/:id", o.requestWrapper(old.Beatmap))
+
 	r.NotFound = _handler{o}
 
 	return r
