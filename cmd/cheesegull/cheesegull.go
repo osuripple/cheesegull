@@ -14,6 +14,7 @@ import (
 	"github.com/osuripple/cheesegull/app"
 	"github.com/osuripple/cheesegull/downloader"
 	"github.com/osuripple/cheesegull/providers/fileresolvers"
+	"github.com/osuripple/cheesegull/providers/redis"
 	"github.com/osuripple/cheesegull/providers/sql"
 	osuapi "gopkg.in/thehowl/go-osuapi.v1"
 	cli "gopkg.in/urfave/cli.v2"
@@ -27,7 +28,14 @@ var (
 	osuAPIKey          string
 	disableStacktraces bool
 	workers            uint
+	redisNetwork       string
+	redisAddr          string
+	redisPassword      string
+	redisDB            int
 )
+
+const usageText = `cheesegull \
+      --osu-username Someone --osu-password 'Some password' --osu-api-key 'key'`
 
 func main() {
 	app := &cli.App{
@@ -39,7 +47,8 @@ func main() {
 		Authors: []*cli.Author{
 			{"Morgan Bazalgette", "the@howl.moe"},
 		},
-		Action: execute,
+		UsageText: usageText,
+		Action:    execute,
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:        "mysql-dsn",
@@ -78,6 +87,33 @@ func main() {
 				Value:       4,
 				Destination: &workers,
 			},
+			&cli.StringFlag{
+				Name:        "redis-network",
+				Usage:       "Redis network. Either tcp or unix.",
+				EnvVars:     []string{"REDIS_NETWORK"},
+				Destination: &redisNetwork,
+				Value:       "tcp",
+			},
+			&cli.StringFlag{
+				Name:        "redis-addr",
+				Usage:       "Redis address.",
+				EnvVars:     []string{"REDIS_ADDR"},
+				Destination: &redisAddr,
+				Value:       "localhost:6379",
+			},
+			&cli.StringFlag{
+				Name:        "redis-password",
+				Usage:       "Password of the redis instance.",
+				EnvVars:     []string{"REDIS_PASSWORD"},
+				Destination: &redisPassword,
+			},
+			&cli.IntFlag{
+				Name:        "redis-db",
+				Usage:       "Number of the Redis database.",
+				EnvVars:     []string{"REDIS_DB"},
+				Destination: &redisDB,
+				Value:       0,
+			},
 		},
 	}
 
@@ -98,15 +134,26 @@ func execute(c *cli.Context) error {
 	}
 	fp := fileresolvers.FileSystem{}
 	api := osuapi.NewClient(osuAPIKey)
+	osuapi.RateLimit(600)
 	if err := api.Test(); err != nil {
+		return err
+	}
+	red, err := redis.New(redis.Options{
+		Network:  redisNetwork,
+		Addr:     redisAddr,
+		Password: redisPassword,
+		DB:       redisDB,
+	})
+	if err != nil {
 		return err
 	}
 
 	a := &app.App{
-		Downloader: d,
-		Service:    prov,
-		FileResolver: fp,
-		Source:     api,
+		Downloader:    d,
+		Service:       prov,
+		FileResolver:  fp,
+		Source:        api,
+		Communication: red,
 		ErrorHandler: func(err error) {
 			fmt.Println(err)
 			if !disableStacktraces {

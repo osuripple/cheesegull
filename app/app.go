@@ -11,10 +11,11 @@ import (
 // App is the basic struct of the application which contains all the methods
 // to make it run smoothly.
 type App struct {
-	Downloader cheesegull.BeatmapDownloader
-	Source     cheesegull.BeatmapInfoSource
-	Service    cheesegull.BeatmapService
-	FileResolver cheesegull.FileResolver
+	Downloader    cheesegull.BeatmapDownloader
+	Source        cheesegull.BeatmapInfoSource
+	Service       cheesegull.BeatmapService
+	FileResolver  cheesegull.FileResolver
+	Communication cheesegull.CommunicationService
 	// handles non-critical errors
 	ErrorHandler func(err error)
 	download     chan cheesegull.BeatmapSet
@@ -34,6 +35,12 @@ func (a *App) Start(n int) error {
 		go a.Worker()
 	}
 
+	ch, err := a.Communication.BeatmapRequestsChannel()
+	if err != nil {
+		return err
+	}
+	go a.communicationSync(a.download, ch)
+
 	offset := 0
 	for {
 		sets, err := a.Service.ChunkOfSets(offset, chunkSize, cheesegull.SortLastChecked)
@@ -41,6 +48,11 @@ func (a *App) Start(n int) error {
 			return err
 		}
 
+		// If the number of sets is == the chunkSize, it means we filled up an
+		// entire chunk, so there's probably more and in the next db call we
+		// should look into it.
+		// If they are different, it means we finished the sets to go through
+		// and thus we should discover new beatmaps.
 		if len(sets) == chunkSize {
 			offset += chunkSize
 		} else {
@@ -52,6 +64,8 @@ func (a *App) Start(n int) error {
 			offset = 0
 		}
 
+		// check beatmaps are good and if they are, add them to the download
+		// queue.
 		for _, s := range sets {
 			b, err := a.CheckGood(&s)
 			if err != nil {
@@ -103,4 +117,24 @@ func (a *App) handle(err error) {
 		return
 	}
 	a.ErrorHandler(err)
+}
+
+func (a *App) communicationSync(dst chan<- cheesegull.BeatmapSet, src <-chan int) {
+	for i := range src {
+		fmt.Println("Adding", i)
+
+		s := cheesegull.BeatmapSet{
+			SetID: i,
+		}
+		b, err := a.CheckGood(&s)
+		if err != nil {
+			fmt.Println(err)
+			continue
+		}
+
+		// if it's false, it means that the beatmap could not be found
+		if b {
+			dst <- s
+		}
+	}
 }

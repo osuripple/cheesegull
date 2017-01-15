@@ -16,6 +16,7 @@ func main() {
 		{3, time.Date(2007, time.December, 23, 22, 10, 01, 0, time.Local)},
 		{3, time.Date(2016, time.December, 23, 22, 10, 01, 0, time.Local)},
 		{1, time.Date(2016, time.December, 23, 22, 10, 01, 0, time.Local)},
+		{1, time.Time{}},
 	}
 	for _, el := range testTable {
 		d := calc(el.rankedStatus, el.lastUpdate)
@@ -25,6 +26,11 @@ func main() {
 
 func calc(rankedStatus int, lastUpdate time.Time) time.Duration {
 	var multiplier float64
+
+	// should update immediately
+	if lastUpdate.IsZero() {
+		return time.Duration(0)
+	}
 
 	switch rankedStatus {
 	// ranked, approved

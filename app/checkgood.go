@@ -34,6 +34,11 @@ func (a *App) CheckGood(s *cheesegull.BeatmapSet) (bool, error) {
 func enoughTimePassed(bm cheesegull.BeatmapSet) bool {
 	var multiplier float64
 
+	// should update immediately
+	if bm.LastUpdate.IsZero() || bm.LastChecked.IsZero() {
+		return true
+	}
+
 	switch bm.RankedStatus {
 	// ranked, approved
 	case 1, 2:
