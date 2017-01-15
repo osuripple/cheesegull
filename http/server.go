@@ -2,7 +2,9 @@
 package http
 
 import (
+	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/julienschmidt/httprouter"
 	"github.com/osuripple/cheesegull"
@@ -66,6 +68,7 @@ func (o Options) requestWrapperRestr(a func(w http.ResponseWriter, r *http.Reque
 }
 
 func (o Options) req(a func(w http.ResponseWriter, r *http.Request, c *ctx.Context), w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+	start := time.Now()
 	a(w, r, &ctx.Context{
 		Params:         p,
 		BeatmapService: o.BeatmapService,
@@ -73,4 +76,6 @@ func (o Options) req(a func(w http.ResponseWriter, r *http.Request, c *ctx.Conte
 		Communication:  o.Communication,
 		Request:        r,
 	})
+	fmt.Printf("%v | %-12v %-4s %-15s\n", start.Format("2006-01-02 15:04:05"),
+		time.Since(start), r.Method, r.URL.Path)
 }
