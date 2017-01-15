@@ -11,15 +11,20 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/osuripple/cheesegull"
 	"github.com/osuripple/cheesegull/http"
-	"github.com/osuripple/cheesegull/providers/fileresolvers"
+	"github.com/osuripple/cheesegull/providers/redis"
 	"github.com/osuripple/cheesegull/providers/sql"
 	cli "gopkg.in/urfave/cli.v2"
+	"zxq.co/x/rs"
 )
 
 // settings variables
 var (
-	mysqlDSN string
-	port     string
+	mysqlDSN      string
+	port          string
+	redisNetwork  string
+	redisAddr     string
+	redisPassword string
+	redisDB       int
 )
 
 func main() {
@@ -49,6 +54,33 @@ func main() {
 				Value:       ":62011",
 				Destination: &port,
 			},
+			&cli.StringFlag{
+				Name:        "redis-network",
+				Usage:       "Redis network. Either tcp or unix.",
+				EnvVars:     []string{"REDIS_NETWORK"},
+				Destination: &redisNetwork,
+				Value:       "tcp",
+			},
+			&cli.StringFlag{
+				Name:        "redis-addr",
+				Usage:       "Redis address.",
+				EnvVars:     []string{"REDIS_ADDR"},
+				Destination: &redisAddr,
+				Value:       "localhost:6379",
+			},
+			&cli.StringFlag{
+				Name:        "redis-password",
+				Usage:       "Password of the redis instance.",
+				EnvVars:     []string{"REDIS_PASSWORD"},
+				Destination: &redisPassword,
+			},
+			&cli.IntFlag{
+				Name:        "redis-db",
+				Usage:       "Number of the Redis database.",
+				EnvVars:     []string{"REDIS_DB"},
+				Destination: &redisDB,
+				Value:       0,
+			},
 		},
 	}
 
@@ -62,10 +94,23 @@ func execute(c *cli.Context) error {
 	if err != nil {
 		return err
 	}
+	red, err := redis.New(redis.Options{
+		Network:  redisNetwork,
+		Addr:     redisAddr,
+		Password: redisPassword,
+		DB:       redisDB,
+	})
+	if err != nil {
+		return err
+	}
+
+	sec := red.GetSecurityKey(rs.String(25))
+	fmt.Println("Security key:", sec)
 
 	serv := http.NewServer(http.Options{
 		BeatmapService: prov,
-		FileResolver:   fileresolvers.FileSystem{},
+		Communication:  red,
+		APISecret:      sec,
 	})
 
 	return nhttp.ListenAndServe(port, serv)

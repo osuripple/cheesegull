@@ -26,5 +26,8 @@ var beatmapRegex = regexp.MustCompile(`^/[0-9]+n?\.osz$`)
 func notFoundHandler(w http.ResponseWriter, r *http.Request, c *ctx.Context) {
 	if beatmapRegex.MatchString(r.URL.Path) {
 		osz.GetBeatmap(w, r, c)
+		return
 	}
+	w.WriteHeader(404)
+	w.Write([]byte("404 Not Found"))
 }

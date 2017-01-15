@@ -8,6 +8,7 @@ import (
 // Provided is a struct containing the services implemented by this package.
 type Provided interface {
 	cheesegull.CommunicationService
+	cheesegull.SystemService
 }
 
 type impl struct {

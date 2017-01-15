@@ -14,6 +14,8 @@ import (
 type Options struct {
 	BeatmapService cheesegull.BeatmapService
 	FileResolver   cheesegull.FileResolver
+	Communication  cheesegull.CommunicationService
+	APISecret      string
 }
 
 // NewServer creates a new HTTP server for CheeseGull.
