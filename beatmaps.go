@@ -53,6 +53,20 @@ type Beatmap struct {
 	DifficultyRating float64
 }
 
+// SearchOptions are the various options for searching on the CheeseGull API.
+type SearchOptions struct {
+	// If len is 0, then it should be treated as if all statuses are good.
+	Status []int
+	// Query is what we're looking for.
+	Query string
+	// Game mode to which limit the results. If len is 0, it means all modes
+	// are ok.
+	Mode []int
+	// Pagination options.
+	Offset int
+	Amount int // ... of results to return
+}
+
 // These are the sorting systems for ChunkOfSets
 const (
 	// SortLastChecked sorts by the date last checked, in descending order
@@ -66,7 +80,7 @@ type BeatmapService interface {
 	BeatmapSets(...int) ([]BeatmapSet, error)
 	ChunkOfSets(offset, chunk, sortSystem int) ([]BeatmapSet, error)
 	HighestBeatmapSetID() (int, error)
-	SearchSets(string) ([]BeatmapSet, error)
+	SearchSets(SearchOptions) ([]BeatmapSet, error)
 	CreateSet(BeatmapSet) error
 	CreateBeatmaps(...Beatmap) error
 }
@@ -115,7 +129,7 @@ func (b *Beatmap) InheritFromOsuBeatmap(bm osuapi.Beatmap) {
 	b.CS = float32(bm.CircleSize)
 	b.DifficultyRating = bm.DifficultyRating
 	b.DiffName = bm.DiffName
-	b.FileMD5 = bm.DiffName
+	b.FileMD5 = bm.FileMD5
 	b.HitLength = bm.HitLength
 	b.HP = float32(bm.HPDrain)
 	b.MaxCombo = bm.MaxCombo

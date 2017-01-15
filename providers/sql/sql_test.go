@@ -65,9 +65,34 @@ func TestSearchSets(t *testing.T) {
 	if p == nil {
 		t.Skip()
 	}
-	f, err := p.SearchSets("dario")
-	t.Log("\n" + spew.Sdump(f))
-	if err != nil {
-		t.Fatal(err)
+	table := []cheesegull.SearchOptions{
+		{
+			Amount: 50,
+		},
+		{
+			Query:  "DISCO",
+			Amount: 50,
+		},
+		{
+			Mode:   []int{0, 1},
+			Amount: 50,
+		},
+		{
+			Query:  "KASIM SEREN",
+			Mode:   []int{3},
+			Amount: 50,
+		},
+		{
+			Status: []int{1},
+			Mode:   []int{0},
+			Amount: 50,
+		},
+	}
+	for _, el := range table {
+		f, err := p.SearchSets(el)
+		t.Log("\n" + spew.Sdump(f))
+		if err != nil {
+			t.Fatal(err)
+		}
 	}
 }

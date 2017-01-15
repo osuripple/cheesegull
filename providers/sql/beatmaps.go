@@ -63,8 +63,43 @@ const searchQuery = "SELECT " + setsFields +
 	"WHERE MATCH (s.artist, s.title, s.creator, s.source, s.tags) " +
 	"AGAINST (? IN NATURAL LANGUAGE MODE)"
 
-func (p *provider) SearchSets(q string) ([]cheesegull.BeatmapSet, error) {
-	rows, err := p.db.Query(searchQuery, q)
+func _and(needAnd bool) string {
+	if needAnd {
+		return " AND "
+	}
+	return " WHERE "
+}
+
+func (p *provider) SearchSets(opts cheesegull.SearchOptions) ([]cheesegull.BeatmapSet, error) {
+	queryBase := "SELECT " + setsFields
+	params := make([]interface{}, 0, 1)
+	needAnd := false
+
+	if len(opts.Mode) > 0 {
+		queryBase += _and(needAnd) + "b.mode IN (?)"
+		params = append(params, opts.Mode)
+		needAnd = true
+	}
+	if len(opts.Status) > 0 {
+		queryBase += _and(needAnd) + "s.ranked_status IN (?)"
+		params = append(params, opts.Status)
+		needAnd = true
+	}
+	if opts.Query != "" {
+		queryBase += _and(needAnd) +
+			"MATCH (s.artist, s.title, s.creator, s.source, s.tags) AGAINST (? IN NATURAL LANGUAGE MODE)"
+		params = append(params, opts.Query)
+	}
+
+	queryBase += fmt.Sprintf(" ORDER BY s.last_update DESC LIMIT %d, %d", opts.Offset, opts.Amount)
+
+	queryBase, params, err := sqlx.In(queryBase, params...)
+
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := p.db.Query(queryBase, params...)
 	if err != nil {
 		return nil, err
 	}
