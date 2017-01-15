@@ -11,6 +11,7 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/osuripple/cheesegull"
 	"github.com/osuripple/cheesegull/http"
+	"github.com/osuripple/cheesegull/providers/fileresolvers"
 	"github.com/osuripple/cheesegull/providers/redis"
 	"github.com/osuripple/cheesegull/providers/sql"
 	cli "gopkg.in/urfave/cli.v2"
@@ -111,6 +112,7 @@ func execute(c *cli.Context) error {
 		BeatmapService: prov,
 		Communication:  red,
 		APISecret:      sec,
+		FileResolver:   fileresolvers.FileSystem{},
 	})
 
 	fmt.Println("Listening on", port)
