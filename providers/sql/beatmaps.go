@@ -4,8 +4,6 @@ import (
 	"database/sql"
 	"fmt"
 
-	"os"
-
 	"github.com/jmoiron/sqlx"
 	"github.com/osuripple/cheesegull"
 )
@@ -96,10 +94,6 @@ func (p *provider) SearchSets(opts cheesegull.SearchOptions) ([]cheesegull.Beatm
 	queryBase += fmt.Sprintf(" ORDER BY s.last_update DESC LIMIT %d, %d", opts.Offset, opts.Amount)
 
 	queryBase, params, err := sqlx.In(queryBase, params...)
-
-	if os.Getenv("DEBUG") == "1" {
-		fmt.Printf("search: %q | %#v\n", queryBase, params)
-	}
 
 	if err != nil {
 		return nil, err
