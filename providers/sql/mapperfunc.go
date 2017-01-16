@@ -11,6 +11,9 @@ import (
 // MapperFunc is the MapperFunc to set to an sqlx db so that it can work
 // properly with structs.
 func MapperFunc(s string) string {
+	if v, ok := clusterfucks[s]; ok {
+		return v
+	}
 
 	var result string
 	var words []string
@@ -107,4 +110,8 @@ var commonInitialisms = map[string]bool{
 	"CS": true,
 	"OD": true,
 	"HP": true,
+}
+
+var clusterfucks = map[string]string{
+	"ParentSetID": "parent_id",
 }

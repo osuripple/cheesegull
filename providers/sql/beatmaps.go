@@ -10,7 +10,7 @@ import (
 
 func (p *provider) Beatmaps(beatmapIDs ...int) ([]cheesegull.Beatmap, error) {
 	query, params, err := sqlx.In("SELECT "+`
-		id as beatmap_id, diff_name, file_md5, mode, bpm, ar, od, cs, hp,
+		id as beatmap_id, parent_id, diff_name, file_md5, mode, bpm, ar, od, cs, hp,
 		total_length, hit_length, playcount, passcount, max_combo,
 		difficulty_rating`+" FROM beatmaps WHERE id IN (?)", beatmapIDs)
 	if err != nil {
@@ -26,7 +26,7 @@ const setsFields = `
 	s.artist, s.title, s.creator, s.source, s.tags, s.has_video, s.genre,
 	s.language, s.favourites,
 	
-	b.id as beatmap_id, b.diff_name, b.file_md5, b.mode, b.bpm, b.ar, b.od, b.cs, b.hp,
+	b.id as beatmap_id, b.parent_id, b.diff_name, b.file_md5, b.mode, b.bpm, b.ar, b.od, b.cs, b.hp,
 	b.total_length, b.hit_length, b.playcount, b.passcount, b.max_combo,
 	b.difficulty_rating
 FROM beatmaps b
@@ -119,7 +119,7 @@ RowLoop:
 			&s.LastChecked, &s.Artist, &s.Title, &s.Creator, &s.Source, &s.Tags,
 			&s.HasVideo, &s.Genre, &s.Language, &s.Favourites,
 
-			&b.BeatmapID, &b.DiffName, &b.FileMD5, &b.Mode, &b.BPM, &b.AR,
+			&b.BeatmapID, &b.ParentSetID, &b.DiffName, &b.FileMD5, &b.Mode, &b.BPM, &b.AR,
 			&b.OD, &b.CS, &b.HP, &b.TotalLength, &b.TotalLength, &b.Playcount,
 			&b.Passcount, &b.MaxCombo, &b.DifficultyRating,
 		)
