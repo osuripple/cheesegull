@@ -2,11 +2,11 @@ package sql
 
 import "github.com/jmoiron/sqlx"
 
-// This file provides SQL migrations for SQL databases, which is to say MySQL
-// and ql.
+// This file provides SQL migrations for MySQL.
 
 var migrations = []func(db *sqlx.DB) error{
 	migrateInitialise,
+	setModes,
 }
 
 func migrateInitialise(db *sqlx.DB) error {
@@ -52,6 +52,38 @@ func migrateInitialise(db *sqlx.DB) error {
 		) ENGINE=InnoDB;
 	`)
 	return err
+}
+
+func setModes(db *sqlx.DB) error {
+	_, err := db.Exec(`
+		ALTER TABLE sets ADD COLUMN set_modes INT NOT NULL;
+	`)
+	if err != nil {
+		return err
+	}
+
+	var bms []struct {
+		ParentID int
+		Mode     int
+	}
+	err = db.Select(&bms, "SELECT parent_id, mode FROM beatmaps")
+	if err != nil {
+		return err
+	}
+
+	modes := make(map[int]int)
+	for _, b := range bms {
+		modes[b.ParentID] |= 1 << uint(b.Mode)
+	}
+
+	for k, v := range modes {
+		_, err := db.Exec("UPDATE sets SET set_modes = ? WHERE set_id = ?", v, k)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 // AutoMigrateDB automatically updates a database to the latest version.

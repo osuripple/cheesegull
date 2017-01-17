@@ -66,28 +66,36 @@ func _and(needAnd bool) string {
 	return " WHERE "
 }
 
+// Alright, so since if we are asked to return x number of results we have to
+// return x number of *sets*, what this does is: getting first of all all of the
+// distinct beatmap set IDs of matching sets, then querying with an IN with the
+// standard query done for calling the .sets method.
+// See this: http://stackoverflow.com/a/16257924/5328069
+// This is basically a clusterfuck, but it's the best way I could design it
+// without dropping a single MS of speed.
 func (p *provider) SearchSets(opts cheesegull.SearchOptions) ([]cheesegull.BeatmapSet, error) {
-	queryBase := "SELECT " + setsFields
-	params := make([]interface{}, 0, 1)
+	queryBase := "SELECT DISTINCT set_id FROM sets "
+	params := make([]interface{}, 0, 4)
 	needAnd := false
 
 	if len(opts.Mode) > 0 {
-		queryBase += _and(needAnd) + "b.mode IN (?)"
-		params = append(params, opts.Mode)
+		queryBase += _and(needAnd) + "set_modes & ? = ?"
+		mte := modesToEnum(opts.Mode)
+		params = append(params, mte, mte)
 		needAnd = true
 	}
 	if len(opts.Status) > 0 {
-		queryBase += _and(needAnd) + "s.ranked_status IN (?)"
+		queryBase += _and(needAnd) + "ranked_status IN (?)"
 		params = append(params, opts.Status)
 		needAnd = true
 	}
 	if opts.Query != "" {
 		queryBase += _and(needAnd) +
-			"MATCH (s.artist, s.title, s.creator, s.source, s.tags) AGAINST (? IN NATURAL LANGUAGE MODE)"
+			"MATCH (artist, title, creator, source, tags) AGAINST (? IN NATURAL LANGUAGE MODE)"
 		params = append(params, opts.Query)
 	}
 
-	queryBase += fmt.Sprintf(" ORDER BY s.last_update DESC LIMIT %d, %d", opts.Offset, opts.Amount)
+	queryBase += fmt.Sprintf(" ORDER BY last_update DESC LIMIT %d, %d", opts.Offset, opts.Amount)
 
 	queryBase, params, err := sqlx.In(queryBase, params...)
 
@@ -95,7 +103,9 @@ func (p *provider) SearchSets(opts cheesegull.SearchOptions) ([]cheesegull.Beatm
 		return nil, err
 	}
 
-	rows, err := p.db.Query(queryBase, params...)
+	query := "SELECT" + setsFields + " INNER JOIN (" + queryBase + ") as iq ON s.set_id = iq.set_id"
+
+	rows, err := p.db.Query(query, params...)
 	if err != nil {
 		return nil, err
 	}
@@ -149,19 +159,24 @@ func (p *provider) HighestBeatmapSetID() (i int, err error) {
 }
 
 func (p *provider) CreateSet(s cheesegull.BeatmapSet) error {
+	modes := make([]int, 0, len(s.ChildrenBeatmaps))
+	for _, x := range s.ChildrenBeatmaps2 {
+		modes = append(modes, x.Mode)
+	}
 	_, err := p.db.Exec(`REPLACE INTO sets(
 		set_id, ranked_status, approved_date, last_update, last_checked,
 		artist, title, creator, source, tags, has_video, genre,
-		language, favourites
+		language, favourites, set_modes
 	) VALUES (
 		?, ?, ?, ?, ?,
 		?, ?, ?, ?, ?, ?, ?,
-		?, ?
+		?, ?, ?
 	)`,
 		s.SetID, s.RankedStatus, s.ApprovedDate, s.LastUpdate, s.LastChecked,
 		s.Artist, s.Title, s.Creator, s.Source, s.Tags, s.HasVideo, s.Genre,
-		s.Language, s.Favourites,
+		s.Language, s.Favourites, modesToEnum(modes),
 	)
+	fmt.Println(modesToEnum(modes))
 	if len(s.ChildrenBeatmaps2) > 0 {
 		err := p.CreateBeatmaps(s.ChildrenBeatmaps2...)
 		if err != nil {
