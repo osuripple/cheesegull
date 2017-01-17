@@ -8,4 +8,5 @@ could expect of a mirror, including sharding, an API, and whatever you could
 think of.
 
 Documentation of the API is available at the
-[Ripple Docs](https://docs.ripple.moe/docs/cheesegull/cheesegull-api)
+[Ripple Docs](https://docs.ripple.moe/docs/cheesegull/cheesegull-api).
+[Trello board](https://trello.com/b/TOpdsUxh/cheesegull).
