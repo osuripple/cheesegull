@@ -59,10 +59,6 @@ func (p *provider) ChunkOfSets(offset, chunk, sortSystem int) ([]cheesegull.Beat
 	return p.sets(rows)
 }
 
-const searchQuery = "SELECT " + setsFields +
-	"WHERE MATCH (s.artist, s.title, s.creator, s.source, s.tags) " +
-	"AGAINST (? IN NATURAL LANGUAGE MODE)"
-
 func _and(needAnd bool) string {
 	if needAnd {
 		return " AND "
