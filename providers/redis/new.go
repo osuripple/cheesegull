@@ -9,6 +9,7 @@ import (
 type Provided interface {
 	cheesegull.CommunicationService
 	cheesegull.SystemService
+	cheesegull.Logging
 }
 
 type impl struct {

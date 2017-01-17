@@ -9,3 +9,11 @@ type SystemService interface {
 	// the one currently stored does not exist.
 	GetSecurityKey(def string) string
 }
+
+// Logging is a service that logs in a database certain information.
+type Logging interface {
+	// UpdateInLast5Minutes checks whether a beatmap (i) was requested an update
+	// in the previous 5 minutes, and if it wasn't it records the update being
+	// requested.
+	UpdateInLast5Minutes(i int) (bool, error)
+}

@@ -18,6 +18,7 @@ type Options struct {
 	BeatmapService cheesegull.BeatmapService
 	FileResolver   cheesegull.FileResolver
 	Communication  cheesegull.CommunicationService
+	Logging        cheesegull.Logging
 	APISecret      string
 }
 
@@ -74,6 +75,7 @@ func (o Options) req(a func(w http.ResponseWriter, r *http.Request, c *ctx.Conte
 		BeatmapService: o.BeatmapService,
 		FileResolver:   o.FileResolver,
 		Communication:  o.Communication,
+		Logging:        o.Logging,
 		Request:        r,
 	})
 	fmt.Printf("%v | %-12v %-4s %-15s\n", start.Format("2006-01-02 15:04:05"),

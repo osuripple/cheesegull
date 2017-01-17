@@ -24,7 +24,19 @@ func RequestBeatmap(w http.ResponseWriter, r *http.Request, c *ctx.Context) {
 		return
 	}
 
-	err := c.Communication.SendBeatmapRequest(i)
+	l5m, err := c.Logging.UpdateInLast5Minutes(i)
+	if err != nil {
+		c.HandleError(err)
+		j(w, 200, aec)
+		return
+	}
+	if l5m {
+		resp.Message = "that beatmap was already requested in the last 5 minutes!"
+		j(w, 200, resp)
+		return
+	}
+
+	err = c.Communication.SendBeatmapRequest(i)
 	if err != nil {
 		c.HandleError(err)
 		j(w, 500, aec)

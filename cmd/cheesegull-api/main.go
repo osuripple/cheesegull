@@ -113,6 +113,7 @@ func execute(c *cli.Context) error {
 		Communication:  red,
 		APISecret:      sec,
 		FileResolver:   fileresolvers.FileSystem{},
+		Logging:        red,
 	})
 
 	fmt.Println("Listening on", port)
