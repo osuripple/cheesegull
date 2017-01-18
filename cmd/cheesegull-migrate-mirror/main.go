@@ -57,6 +57,8 @@ func execute(c *cli.Context) error {
 	bar := pb.StartNew(len(files))
 	bar.Start()
 
+	errorList := make([]error, 0, 256)
+
 	for _, file := range files {
 		bar.Increment()
 		if file.IsDir() {
@@ -76,7 +78,8 @@ func execute(c *cli.Context) error {
 		for _, c := range s.ChildrenBeatmaps {
 			data, err := ioutil.ReadFile(fmt.Sprintf("data/b/%d.json", c))
 			if err != nil {
-				return err
+				errorList = append(errorList, err)
+				continue
 			}
 			var b cheesegull.Beatmap
 			err = json.Unmarshal(data, &b)
@@ -92,6 +95,13 @@ func execute(c *cli.Context) error {
 		}
 	}
 	bar.FinishPrint("Done!")
+
+	if len(errorList) > 0 {
+		fmt.Println("Errors:")
+		for _, err := range errorList {
+			fmt.Println(err)
+		}
+	}
 
 	return nil
 }
