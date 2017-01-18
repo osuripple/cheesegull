@@ -176,7 +176,6 @@ func (p *provider) CreateSet(s cheesegull.BeatmapSet) error {
 		s.Artist, s.Title, s.Creator, s.Source, s.Tags, s.HasVideo, s.Genre,
 		s.Language, s.Favourites, modesToEnum(modes),
 	)
-	fmt.Println(modesToEnum(modes))
 	if len(s.ChildrenBeatmaps2) > 0 {
 		err := p.CreateBeatmaps(s.ChildrenBeatmaps2...)
 		if err != nil {
