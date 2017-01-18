@@ -48,20 +48,14 @@ func (a *App) Start(n int) error {
 			return err
 		}
 
-		// If the number of sets is == the chunkSize, it means we filled up an
-		// entire chunk, so there's probably more and in the next db call we
-		// should look into it.
-		// If they are different, it means we finished the sets to go through
-		// and thus we should discover new beatmaps.
-		if len(sets) == chunkSize {
-			offset += chunkSize
-		} else {
+		if len(sets) == 0 {
 			err := a.discoverNew()
 			if err != nil {
 				return err
 			}
 			// repeat from the beginning
 			offset = 0
+			continue
 		}
 
 		// check beatmaps are good and if they are, add them to the download
@@ -77,6 +71,8 @@ func (a *App) Start(n int) error {
 				a.download <- s
 			}
 		}
+
+		offset += chunkSize
 	}
 }
 
