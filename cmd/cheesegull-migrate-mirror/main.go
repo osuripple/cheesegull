@@ -4,11 +4,11 @@
 package main
 
 import (
-	"fmt"
-	"os"
-
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
+	"os"
+	"sync"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/osuripple/cheesegull"
@@ -43,10 +43,21 @@ func main() {
 	app.Run(os.Args)
 }
 
+var createSetChan = make(chan cheesegull.BeatmapSet, 100)
+var errorList = make([]error, 0, 256)
+var wg = new(sync.WaitGroup)
+var p sql.Provided
+
 func execute(c *cli.Context) error {
-	p, err := sql.Open("mysql", mysqlDSN)
+	var err error
+	p, err = sql.Open("mysql", mysqlDSN)
 	if err != nil {
 		return err
+	}
+
+	for i := 0; i < 50; i++ {
+		go thr()
+		wg.Add(1)
 	}
 
 	files, err := ioutil.ReadDir("data/s/")
@@ -56,8 +67,6 @@ func execute(c *cli.Context) error {
 
 	bar := pb.StartNew(len(files))
 	bar.Start()
-
-	errorList := make([]error, 0, 256)
 
 	for _, file := range files {
 		bar.Increment()
@@ -89,11 +98,11 @@ func execute(c *cli.Context) error {
 			s.ChildrenBeatmaps2 = append(s.ChildrenBeatmaps2, b)
 		}
 
-		err = p.CreateSet(s)
-		if err != nil {
-			return err
-		}
+		createSetChan <- s
 	}
+	close(createSetChan)
+	wg.Wait()
+
 	bar.FinishPrint("Done!")
 
 	if len(errorList) > 0 {
@@ -104,4 +113,14 @@ func execute(c *cli.Context) error {
 	}
 
 	return nil
+}
+
+func thr() {
+	for i := range createSetChan {
+		err := p.CreateSet(i)
+		if err != nil {
+			fmt.Println(err)
+		}
+	}
+	wg.Done()
 }
