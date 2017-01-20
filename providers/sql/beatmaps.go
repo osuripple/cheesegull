@@ -48,6 +48,8 @@ func (p *provider) BeatmapSets(sets ...int) ([]cheesegull.BeatmapSet, error) {
 var sortingSystems = [...]string{
 	// SortLastChecked
 	"SELECT " + setsFields + " ORDER BY s.last_checked DESC LIMIT %d, %d",
+	// SortID
+	"SELECT " + setsFields + " ORDER BY s.set_id DESC LIMIT %d, %d",
 }
 
 func (p *provider) ChunkOfSets(offset, chunk, sortSystem int) ([]cheesegull.BeatmapSet, error) {
@@ -95,7 +97,7 @@ func (p *provider) SearchSets(opts cheesegull.SearchOptions) ([]cheesegull.Beatm
 		params = append(params, opts.Query)
 	}
 
-	queryBase += fmt.Sprintf(" ORDER BY last_update DESC LIMIT %d, %d", opts.Offset, opts.Amount)
+	queryBase += fmt.Sprintf(" ORDER BY set_id DESC LIMIT %d, %d", opts.Offset, opts.Amount)
 
 	queryBase, params, err := sqlx.In(queryBase, params...)
 

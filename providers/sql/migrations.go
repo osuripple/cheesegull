@@ -7,6 +7,11 @@ import "github.com/jmoiron/sqlx"
 var migrations = []func(db *sqlx.DB) error{
 	migrateInitialise,
 	setModes,
+	// add foreign key to beatmaps, HUGE speedup
+	func(db *sqlx.DB) error {
+		_, err := db.Exec("ALTER TABLE beatmaps ADD FOREIGN KEY (parent_id) REFERENCES sets(set_id);")
+		return err
+	},
 }
 
 func migrateInitialise(db *sqlx.DB) error {

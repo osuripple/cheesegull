@@ -71,6 +71,8 @@ type SearchOptions struct {
 const (
 	// SortLastChecked sorts by the date last checked, in descending order
 	SortLastChecked = iota
+	// SortID sorts by ID, descending order
+	SortID
 )
 
 // BeatmapService is a service connected to a database that can fetch
