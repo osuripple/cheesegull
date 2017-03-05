@@ -165,7 +165,7 @@ func (p *provider) CreateSet(s cheesegull.BeatmapSet) error {
 	for _, x := range s.ChildrenBeatmaps2 {
 		modes = append(modes, x.Mode)
 	}
-	_, err := p.db.Exec(`REPLACE INTO sets(
+	_, err := p.db.Exec(`INSERT INTO sets(
 		set_id, ranked_status, approved_date, last_update, last_checked,
 		artist, title, creator, source, tags, has_video, genre,
 		language, favourites, set_modes
@@ -173,7 +173,16 @@ func (p *provider) CreateSet(s cheesegull.BeatmapSet) error {
 		?, ?, ?, ?, ?,
 		?, ?, ?, ?, ?, ?, ?,
 		?, ?, ?
-	)`,
+	) ON DUPLICATE KEY UPDATE 
+		set_id = VALUES(set_id), ranked_status = VALUES(ranked_status),
+		approved_date = VALUES(approved_date),
+		last_update = VALUES(last_update), last_checked = VALUES(last_checked),
+		artist = VALUES(artist), title = VALUES(title),
+		creator = VALUES(creator), source = VALUES(source), tags = VALUES(tags),
+		has_video = VALUES(has_video), genre = VALUES(genre),
+		language = VALUES(language), favourites = VALUES(favourites),
+		set_modes = VALUES(set_modes)
+	`,
 		s.SetID, s.RankedStatus, s.ApprovedDate, s.LastUpdate, s.LastChecked,
 		s.Artist, s.Title, s.Creator, s.Source, s.Tags, s.HasVideo, s.Genre,
 		s.Language, s.Favourites, modesToEnum(modes),
