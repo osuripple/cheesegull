@@ -3,6 +3,7 @@ package app
 import (
 	"fmt"
 	"io"
+	"time"
 
 	"github.com/osuripple/cheesegull"
 	"github.com/osuripple/cheesegull/providers/fileresolvers"
@@ -29,15 +30,30 @@ func (a *App) Worker() {
 // Update takes care of updating a beatmap to the latest version.
 func (a *App) Update(s cheesegull.BeatmapSet) error {
 	fmt.Println("Updating", s.SetID, "...")
-	normal, noVideo, err := a.Downloader.Download(s.SetID)
-	if err != nil {
-		// In the case of ErrNoRedirect, we should simply stop downloading,
-		// there's no need to return the error because it is known and common
-		// and to be expected.
-		if err == cheesegull.ErrNoRedirect {
-			return nil
+
+	var (
+		attempts        int
+		normal, noVideo io.Reader
+		err             error
+	)
+	for {
+		normal, noVideo, err = a.Downloader.Download(s.SetID)
+		if err != nil {
+			// In the case of ErrNoRedirect, we should simply stop downloading,
+			// there's no need to return the error because it is known and common
+			// and to be expected.
+			if err == cheesegull.ErrNoRedirect {
+				return nil
+			}
+
+			attempts++
+			if attempts > 5 {
+				return err
+			}
+			time.Sleep(3 * time.Second)
+			continue
 		}
-		return err
+		break
 	}
 
 	if a.FileResolver == nil {

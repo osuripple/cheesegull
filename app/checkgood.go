@@ -13,14 +13,27 @@ func (a *App) CheckGood(s *cheesegull.BeatmapSet) (bool, error) {
 		return false, nil
 	}
 
-	beatmaps, err := a.Source.GetBeatmaps(osuapi.GetBeatmapsOpts{
-		BeatmapSetID: s.SetID,
-	})
-	if err != nil {
-		return false, err
-	}
-	if len(beatmaps) == 0 {
-		return false, nil
+	var (
+		beatmaps []osuapi.Beatmap
+		err      error
+		attempts int
+	)
+	for {
+		beatmaps, err = a.Source.GetBeatmaps(osuapi.GetBeatmapsOpts{
+			BeatmapSetID: s.SetID,
+		})
+		if err != nil {
+			attempts++
+			if attempts > 5 {
+				return false, err
+			}
+			time.Sleep(3 * time.Second)
+			continue
+		}
+		if len(beatmaps) == 0 {
+			return false, nil
+		}
+		break
 	}
 
 	// Update beatmap
