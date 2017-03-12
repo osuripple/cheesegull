@@ -62,6 +62,7 @@ func (c *Client) Download(setID int) (io.Reader, io.Reader, error) {
 	if err != nil {
 		return nil, nil, err
 	}
+	page.Body.Close()
 	hasVideo := bytes.Contains(pageData, []byte(fmt.Sprintf(`href="/d/%dn"`, setID)))
 
 	if hasVideo {
