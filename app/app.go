@@ -49,6 +49,7 @@ func (a *App) Start(n int) error {
 		}
 
 		if len(sets) == 0 {
+			fmt.Println("Starting discoverNew")
 			err := a.discoverNew()
 			if err != nil {
 				return err
@@ -61,6 +62,7 @@ func (a *App) Start(n int) error {
 		// check beatmaps are good and if they are, add them to the download
 		// queue.
 		for _, s := range sets {
+			fmt.Println("Checking whether", s.SetID, "is good...")
 			b, err := a.CheckGood(&s)
 			if err != nil {
 				a.handle(err)
@@ -68,6 +70,7 @@ func (a *App) Start(n int) error {
 			}
 
 			if b {
+				fmt.Println("Queueing", s.SetID)
 				a.download <- s
 			}
 		}
