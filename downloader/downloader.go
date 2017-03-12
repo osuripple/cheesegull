@@ -58,11 +58,11 @@ func (c *Client) Download(setID int) (io.ReadCloser, io.ReadCloser, error) {
 	if err != nil {
 		return nil, nil, err
 	}
+	defer page.Body.Close()
 	pageData, err := ioutil.ReadAll(page.Body)
 	if err != nil {
 		return nil, nil, err
 	}
-	page.Body.Close()
 	hasVideo := bytes.Contains(pageData, []byte(fmt.Sprintf(`href="/d/%dn"`, setID)))
 
 	if hasVideo {
@@ -72,6 +72,8 @@ func (c *Client) Download(setID int) (io.ReadCloser, io.ReadCloser, error) {
 		}
 		r2, err := c.getReader(strconv.Itoa(setID) + "n")
 		if err != nil {
+			// If r2 fails that is OK, however r1 must be closed, otherwise connections leak
+			r1.Close()
 			return nil, nil, err
 		}
 		return r1, r2, nil
@@ -89,6 +91,7 @@ func (c *Client) getReader(str string) (io.ReadCloser, error) {
 		return nil, err
 	}
 	if resp.Request.URL.Host == "osu.ppy.sh" {
+		resp.Body.Close()
 		return nil, cheesegull.ErrNoRedirect
 	}
 
