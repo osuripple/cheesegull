@@ -39,6 +39,13 @@ func (a *App) Update(s cheesegull.BeatmapSet) error {
 	for {
 		normal, noVideo, err = a.Downloader.Download(s.SetID)
 		if err != nil {
+			if normal != nil {
+				normal.Close()
+			}
+			if noVideo != nil {
+				noVideo.Close()
+			}
+
 			// In the case of ErrNoRedirect, we should simply stop downloading,
 			// there's no need to return the error because it is known and common
 			// and to be expected.
@@ -68,8 +75,8 @@ func (a *App) Update(s cheesegull.BeatmapSet) error {
 		if err != nil {
 			return err
 		}
+		defer normal.Close()
 		io.Copy(w, normal)
-		normal.Close()
 	}
 	if noVideo != nil {
 		w, err := a.FileResolver.Create(s.SetID, true)
@@ -77,8 +84,8 @@ func (a *App) Update(s cheesegull.BeatmapSet) error {
 		if err != nil {
 			return err
 		}
+		defer noVideo.Close()
 		io.Copy(w, noVideo)
-		noVideo.Close()
 	}
 
 	fmt.Println("Finished updating", s.SetID)
