@@ -33,7 +33,7 @@ func (a *App) Update(s cheesegull.BeatmapSet) error {
 
 	var (
 		attempts        int
-		normal, noVideo io.Reader
+		normal, noVideo io.ReadCloser
 		err             error
 	)
 	for {
