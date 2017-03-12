@@ -51,7 +51,7 @@ type Client http.Client
 // Second reader is beatmap without video.
 // If video is not in the beatmap, second reader will be nil and first reader
 // will be beatmap without video.
-func (c *Client) Download(setID int) (io.Reader, io.Reader, error) {
+func (c *Client) Download(setID int) (io.ReadCloser, io.ReadCloser, error) {
 	h := (*http.Client)(c)
 
 	page, err := h.Get(fmt.Sprintf("https://osu.ppy.sh/s/%d", setID))
@@ -81,7 +81,7 @@ func (c *Client) Download(setID int) (io.Reader, io.Reader, error) {
 	return r, nil, err
 }
 
-func (c *Client) getReader(str string) (io.Reader, error) {
+func (c *Client) getReader(str string) (io.ReadCloser, error) {
 	h := (*http.Client)(c)
 
 	resp, err := h.Get("https://osu.ppy.sh/d/" + str)

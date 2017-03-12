@@ -69,6 +69,7 @@ func (a *App) Update(s cheesegull.BeatmapSet) error {
 			return err
 		}
 		io.Copy(w, normal)
+		normal.Close()
 	}
 	if noVideo != nil {
 		w, err := a.FileResolver.Create(s.SetID, true)
@@ -77,6 +78,7 @@ func (a *App) Update(s cheesegull.BeatmapSet) error {
 			return err
 		}
 		io.Copy(w, noVideo)
+		noVideo.Close()
 	}
 
 	fmt.Println("Finished updating", s.SetID)

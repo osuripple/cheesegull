@@ -12,7 +12,7 @@ import (
 // If video is not in the beatmap, second reader will be nil and first reader
 // will be beatmap without video.
 type BeatmapDownloader interface {
-	Download(setID int) (io.Reader, io.Reader, error)
+	Download(setID int) (io.ReadCloser, io.ReadCloser, error)
 }
 
 // ErrNoRedirect is the error to return when the beatmap, while it is on the
