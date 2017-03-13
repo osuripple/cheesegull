@@ -21,7 +21,7 @@ type App struct {
 	download     chan cheesegull.BeatmapSet
 }
 
-const chunkSize = 200
+const chunkSize = 5000
 
 // Start starts the application as a whole. Start should never return, unless
 // there's a critical error.
