@@ -25,7 +25,7 @@ const setsFields = `
 	s.set_id, s.ranked_status, s.approved_date, s.last_update, s.last_checked,
 	s.artist, s.title, s.creator, s.source, s.tags, s.has_video, s.genre,
 	s.language, s.favourites,
-	
+
 	b.id as beatmap_id, b.parent_id, b.diff_name, b.file_md5, b.mode, b.bpm, b.ar, b.od, b.cs, b.hp,
 	b.total_length, b.hit_length, b.playcount, b.passcount, b.max_combo,
 	b.difficulty_rating
@@ -77,7 +77,7 @@ func _and(needAnd bool) string {
 // without dropping a single MS of speed.
 func (p *provider) SearchSets(opts cheesegull.SearchOptions) ([]cheesegull.BeatmapSet, error) {
 	queryBase := "SELECT DISTINCT set_id FROM sets "
-	params := make([]interface{}, 0, 4)
+	params := make([]interface{}, 0, 5)
 	needAnd := false
 
 	if len(opts.Mode) > 0 {
@@ -97,7 +97,8 @@ func (p *provider) SearchSets(opts cheesegull.SearchOptions) ([]cheesegull.Beatm
 		params = append(params, opts.Query)
 	}
 
-	queryBase += fmt.Sprintf(" ORDER BY set_id DESC LIMIT %d, %d", opts.Offset, opts.Amount)
+	queryBase += fmt.Sprintf(" ORDER BY (MATCH (artist, title, creator, source, tags) AGAINST (? IN NATURAL LANGUAGE MODE)) DESC, set_id ASC LIMIT %d, %d", opts.Offset, opts.Amount)
+	params = append(params, opts.Query)
 
 	queryBase, params, err := sqlx.In(queryBase, params...)
 
@@ -173,7 +174,7 @@ func (p *provider) CreateSet(s cheesegull.BeatmapSet) error {
 		?, ?, ?, ?, ?,
 		?, ?, ?, ?, ?, ?, ?,
 		?, ?, ?
-	) ON DUPLICATE KEY UPDATE 
+	) ON DUPLICATE KEY UPDATE
 		set_id = VALUES(set_id), ranked_status = VALUES(ranked_status),
 		approved_date = VALUES(approved_date),
 		last_update = VALUES(last_update), last_checked = VALUES(last_checked),
