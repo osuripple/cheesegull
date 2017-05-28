@@ -3,4 +3,4 @@
 package cheesegull
 
 // Version is the version of cheesegull.
-const Version = "v1.1.4"
+const Version = "v1.2.0"
