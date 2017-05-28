@@ -97,7 +97,7 @@ func (p *provider) SearchSets(opts cheesegull.SearchOptions) ([]cheesegull.Beatm
 		params = append(params, opts.Query)
 	}
 
-	queryBase += fmt.Sprintf(" ORDER BY (MATCH (artist, title, creator, source, tags) AGAINST (? IN NATURAL LANGUAGE MODE)) DESC, set_id ASC LIMIT %d, %d", opts.Offset, opts.Amount)
+	queryBase += fmt.Sprintf(" ORDER BY (MATCH (artist, title, creator, source, tags) AGAINST (? IN NATURAL LANGUAGE MODE)) DESC, set_id DESC LIMIT %d, %d", opts.Offset, opts.Amount)
 	params = append(params, opts.Query)
 
 	queryBase, params, err := sqlx.In(queryBase, params...)
