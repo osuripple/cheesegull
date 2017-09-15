@@ -58,7 +58,7 @@ func writeCmd(cn *pool.Conn, cmds ...Cmder) error {
 		}
 	}
 
-	_, err := cn.NetConn.Write(cn.Wb.Bytes())
+	_, err := cn.Write(cn.Wb.Bytes())
 	return err
 }
 
@@ -445,7 +445,7 @@ func (cmd *StringCmd) Result() (string, error) {
 }
 
 func (cmd *StringCmd) Bytes() ([]byte, error) {
-	return []byte(cmd.val), cmd.err
+	return cmd.val, cmd.err
 }
 
 func (cmd *StringCmd) Int64() (int64, error) {
@@ -540,6 +540,10 @@ func (cmd *StringSliceCmd) Result() ([]string, error) {
 
 func (cmd *StringSliceCmd) String() string {
 	return cmdString(cmd, cmd.val)
+}
+
+func (cmd *StringSliceCmd) ScanSlice(container interface{}) error {
+	return proto.ScanSlice(cmd.Val(), container)
 }
 
 func (cmd *StringSliceCmd) readReply(cn *pool.Conn) error {
