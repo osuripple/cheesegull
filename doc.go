@@ -1,6 +1,7 @@
-// Package cheesegull defines the basic structs and interfaces necessary for
-// cheesegull to work.
-package cheesegull
+// Cheesegull is a webserver that functions as a cache middleman between the
+// official osu! mirrors and requesters of beatmaps, as well as also a cache
+// middleman for beatmaps metadata retrieved from the official osu! API.
+package main
 
 // Version is the version of cheesegull.
-const Version = "v1.2.0"
+const Version = "v2.0.0-pre"

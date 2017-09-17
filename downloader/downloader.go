@@ -12,8 +12,6 @@ import (
 	"net/http/cookiejar"
 	"net/url"
 	"strconv"
-
-	"github.com/osuripple/cheesegull"
 )
 
 // LogIn logs in into an osu! account and returns a Client.
@@ -83,6 +81,10 @@ func (c *Client) Download(setID int) (io.ReadCloser, io.ReadCloser, error) {
 	return r, nil, err
 }
 
+// ErrNoRedirect is returned from Download when we were not redirect, thus
+// indicating that the beatmap is unavailable.
+var ErrNoRedirect = errors.New("no redirect happened, beatmap could not be downloaded")
+
 func (c *Client) getReader(str string) (io.ReadCloser, error) {
 	h := (*http.Client)(c)
 
@@ -92,7 +94,7 @@ func (c *Client) getReader(str string) (io.ReadCloser, error) {
 	}
 	if resp.Request.URL.Host == "osu.ppy.sh" {
 		resp.Body.Close()
-		return nil, cheesegull.ErrNoRedirect
+		return nil, ErrNoRedirect
 	}
 
 	return resp.Body, nil
