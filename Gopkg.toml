@@ -20,3 +20,15 @@
 #  name = "github.com/x/y"
 #  version = "2.4.0"
 
+
+[[constraint]]
+  name = "github.com/alecthomas/kingpin"
+  version = "2.2.5"
+
+[[constraint]]
+  name = "github.com/go-sql-driver/mysql"
+  version = "1.3.0"
+
+[[constraint]]
+  name = "github.com/thehowl/go-osuapi"
+  version = "1.1.0"
