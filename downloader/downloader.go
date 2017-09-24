@@ -44,24 +44,32 @@ func LogIn(username, password string) (*Client, error) {
 // osu! website.
 type Client http.Client
 
+// HasVideo checks whether a beatmap has a video.
+func (c *Client) HasVideo(setID int) (bool, error) {
+	h := (*http.Client)(c)
+
+	page, err := h.Get(fmt.Sprintf("https://osu.ppy.sh/s/%d", setID))
+	if err != nil {
+		return false, err
+	}
+	defer page.Body.Close()
+	body, err := ioutil.ReadAll(page.Body)
+	if err != nil {
+		return false, err
+	}
+	return bytes.Contains(body, []byte(fmt.Sprintf(`href="/d/%dn"`, setID))), nil
+}
+
 // Download downloads a beatmap from the osu! website.
 // First reader is beatmap with video.
 // Second reader is beatmap without video.
 // If video is not in the beatmap, second reader will be nil and first reader
 // will be beatmap without video.
 func (c *Client) Download(setID int) (io.ReadCloser, io.ReadCloser, error) {
-	h := (*http.Client)(c)
-
-	page, err := h.Get(fmt.Sprintf("https://osu.ppy.sh/s/%d", setID))
+	hasVideo, err := c.HasVideo(setID)
 	if err != nil {
 		return nil, nil, err
 	}
-	defer page.Body.Close()
-	pageData, err := ioutil.ReadAll(page.Body)
-	if err != nil {
-		return nil, nil, err
-	}
-	hasVideo := bytes.Contains(pageData, []byte(fmt.Sprintf(`href="/d/%dn"`, setID)))
 
 	if hasVideo {
 		r1, err := c.getReader(strconv.Itoa(setID))
