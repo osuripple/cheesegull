@@ -26,6 +26,12 @@
   version = "v1.3"
 
 [[projects]]
+  name = "github.com/julienschmidt/httprouter"
+  packages = ["."]
+  revision = "8c199fb6259ffc1af525cc3ad52ee60ba8359669"
+  version = "v1.1"
+
+[[projects]]
   name = "github.com/thehowl/go-osuapi"
   packages = ["."]
   revision = "83043565096480f5407bab25a52d7959861cb835"
@@ -34,6 +40,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "635d8e5cfe1e3f46eceec39f33068b7ead3461b9124b9174fcff012b81d8b9c0"
+  inputs-digest = "a29306c7d349461a8ec2c7d31c7ec4f2a3e01c1f4673d47bcbc4eb7f69d69a76"
   solver-name = "gps-cdcl"
   solver-version = 1
