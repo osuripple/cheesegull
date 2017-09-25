@@ -27,6 +27,7 @@ var migrations = [...]string{
 	id INT NOT NULL,
 	parent_set_id INT NOT NULL,
 	diff_name VARCHAR(1000) NOT NULL,
+	file_md5 CHAR(32) NOT NULL,
 	mode INT NOT NULL,
 	bpm DECIMAL(10, 4) NOT NULL,
 	ar DECIMAL(4, 2) NOT NULL,

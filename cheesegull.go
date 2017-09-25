@@ -3,16 +3,22 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	"net/http"
 	"os"
 	"strings"
 	"time"
 
 	"github.com/alecthomas/kingpin"
 	_ "github.com/go-sql-driver/mysql"
+	osuapi "github.com/thehowl/go-osuapi"
+
+	"github.com/osuripple/cheesegull/api"
 	"github.com/osuripple/cheesegull/dbmirror"
 	"github.com/osuripple/cheesegull/downloader"
 	"github.com/osuripple/cheesegull/models"
-	osuapi "github.com/thehowl/go-osuapi"
+
+	// Components of the API we want to use
+	_ "github.com/osuripple/cheesegull/api/metadata"
 )
 
 var (
@@ -20,6 +26,7 @@ var (
 	osuUsername = kingpin.Flag("osu-username", "osu! username (for downloading and fetching whether a beatmap has a video)").Short('u').Envar("OSU_USERNAME").String()
 	osuPassword = kingpin.Flag("osu-password", "osu! password (for downloading and fetching whether a beatmap has a video)").Short('p').Envar("OSU_PASSWORD").String()
 	mysqlDSN    = kingpin.Flag("mysql-dsn", "DSN of MySQL").Short('m').Default("root@/cheesegull").Envar("MYSQL_DSN").String()
+	httpAddr    = kingpin.Flag("http-addr", "Address on which to take HTTP requests.").Short('a').Default("127.0.0.1:62011").String()
 )
 
 func addTimeParsing(dsn string) string {
@@ -62,5 +69,8 @@ func main() {
 
 	// start running components of cheesegull
 	go dbmirror.StartSetUpdater(c, db)
-	dbmirror.DiscoverEvery(c, db, time.Minute*30, time.Second*20)
+	go dbmirror.DiscoverEvery(c, db, time.Minute*30, time.Second*20)
+
+	// create request handler
+	panic(http.ListenAndServe(*httpAddr, api.CreateHandler(db)))
 }

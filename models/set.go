@@ -25,6 +25,10 @@ type Set struct {
 	Favourites       int
 }
 
+const setFields = `id, ranked_status, approved_date, last_update, last_checked,
+artist, title, creator, source, tags, has_video, genre,
+language, favourites`
+
 // FetchSetsForBatchUpdate fetches limit sets from the database, sorted by
 // LastChecked (asc, older first). Results are further filtered: if the set's
 // RankedStatus is 3, 0 or -1 (qualified, pending or WIP), at least 30 minutes
@@ -33,11 +37,7 @@ type Set struct {
 func FetchSetsForBatchUpdate(db *sql.DB, limit int) ([]Set, error) {
 	n := time.Now()
 	rows, err := db.Query(`
-SELECT
-	id, ranked_status, approved_date, last_update, last_checked,
-	artist, title, creator, source, tags, has_video, genre,
-	language, favourites
-FROM sets
+SELECT `+setFields+` FROM sets
 WHERE (ranked_status IN (3, 0, -1) AND last_checked <= ?) OR last_checked <= ?
 ORDER BY last_checked ASC
 LIMIT ?`,
@@ -63,7 +63,33 @@ LIMIT ?`,
 		sets = append(sets, s)
 	}
 
-	return sets, nil
+	return sets, rows.Err()
+}
+
+// FetchSet retrieves a single set to show, alongside its children beatmaps.
+func FetchSet(db *sql.DB, id int) (*Set, error) {
+	var s Set
+	err := db.QueryRow(`SELECT `+setFields+` FROM sets WHERE id = ? LIMIT 1`, id).Scan(
+		&s.ID, &s.RankedStatus, &s.ApprovedDate, &s.LastUpdate, &s.LastChecked,
+		&s.Artist, &s.Title, &s.Creator, &s.Source, &s.Tags, &s.HasVideo, &s.Genre,
+		&s.Language, &s.Favourites,
+	)
+	switch err {
+	case nil:
+		break // carry on
+	case sql.ErrNoRows:
+		// silently ignore no rows, and just don't return anything
+		return nil, nil
+	default:
+		return nil, err
+	}
+
+	rows, err := db.Query(`SELECT `+beatmapFields+` FROM beatmaps WHERE parent_set_id = ?`, s.ID)
+	if err != nil {
+		return nil, err
+	}
+	s.ChildrenBeatmaps, err = readBeatmapsFromRows(rows, 8)
+	return &s, err
 }
 
 // DeleteSet deletes a set from the database, removing also its children
