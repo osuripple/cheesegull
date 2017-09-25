@@ -34,6 +34,8 @@ func addTimeParsing(dsn string) string {
 func main() {
 	kingpin.Parse()
 
+	fmt.Println("Cheesegull", Version)
+
 	// set up osuapi client
 	c := osuapi.NewClient(*osuAPIKey)
 
