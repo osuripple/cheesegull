@@ -5,7 +5,9 @@ package api
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/julienschmidt/httprouter"
 )
@@ -76,6 +78,7 @@ func CreateHandler(db *sql.DB) http.Handler {
 		// Create local copy that we know won't change as the loop proceeds.
 		h := h
 		r.Handle(h.method, h.path, func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+			start := time.Now()
 			ctx := &Context{
 				Request: r,
 				DB:      db,
@@ -83,6 +86,12 @@ func CreateHandler(db *sql.DB) http.Handler {
 				params:  p,
 			}
 			h.f(ctx)
+			fmt.Printf("[R] %s %-10s %-4s %s\n",
+				time.Now().Format("15:04:05"),
+				time.Since(start).String(),
+				r.Method,
+				r.URL.Path,
+			)
 		})
 	}
 	return r
