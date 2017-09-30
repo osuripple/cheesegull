@@ -92,7 +92,7 @@ func Download(c *api.Context) {
 }
 
 func downloadBeatmap(c *downloader.Client, b *housekeeper.CachedBeatmap, house *housekeeper.House) error {
-	var fileSize uint
+	var fileSize uint64
 	defer b.DownloadCompleted(fileSize, house)
 
 	// Start downloading.
@@ -110,7 +110,7 @@ func downloadBeatmap(c *downloader.Client, b *housekeeper.CachedBeatmap, house *
 	defer f.Close()
 
 	fSizeRaw, err := io.Copy(f, r)
-	fileSize = uint(fSizeRaw)
+	fileSize = uint64(fSizeRaw)
 	if err != nil && err != downloader.ErrNoRedirect {
 		return err
 	}

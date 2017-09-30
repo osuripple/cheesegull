@@ -11,7 +11,7 @@ import (
 
 // House manages the state of the cached beatmaps in the local filesystem.
 type House struct {
-	MaxSize     uint
+	MaxSize     uint64
 	state       []*CachedBeatmap
 	stateMutex  sync.RWMutex
 	requestChan chan struct{}
@@ -128,7 +128,7 @@ func (h *House) mapsToRemove() []*CachedBeatmap {
 
 // i hate verbose names myself, but it was very hard to come up with something
 // even as short as this.
-func (h *House) stateSizeAndRemovableMaps() (totalSize uint, removable []*CachedBeatmap) {
+func (h *House) stateSizeAndRemovableMaps() (totalSize uint64, removable []*CachedBeatmap) {
 	h.stateMutex.RLock()
 	for _, b := range h.state {
 		if !b.IsDownloaded() {

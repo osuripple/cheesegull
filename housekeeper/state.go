@@ -16,7 +16,7 @@ type CachedBeatmap struct {
 
 	lastRequested time.Time
 
-	fileSize     uint
+	fileSize     uint64
 	isDownloaded bool
 	mtx          sync.RWMutex
 	waitGroup    sync.WaitGroup
@@ -50,7 +50,7 @@ func (c *CachedBeatmap) IsDownloaded() bool {
 }
 
 // FileSize returns the FileSize of c.
-func (c *CachedBeatmap) FileSize() uint {
+func (c *CachedBeatmap) FileSize() uint64 {
 	c.mtx.RLock()
 	i := c.fileSize
 	c.mtx.RUnlock()
@@ -67,7 +67,7 @@ func (c *CachedBeatmap) MustBeDownloaded() {
 }
 
 // DownloadCompleted must be called once the beatmap has finished downloading.
-func (c *CachedBeatmap) DownloadCompleted(fileSize uint, parentHouse *House) {
+func (c *CachedBeatmap) DownloadCompleted(fileSize uint64, parentHouse *House) {
 	c.mtx.Lock()
 	c.fileSize = fileSize
 	c.isDownloaded = true

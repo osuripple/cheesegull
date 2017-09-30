@@ -47,7 +47,7 @@ func writeBeatmaps(w io.Writer, c []*CachedBeatmap) error {
 		enc[8] = b2i(b.NoVideo)
 		marshalBinaryCopy(enc[9:24], b.LastUpdate)
 		marshalBinaryCopy(enc[24:39], b.lastRequested)
-		putUint64(enc[39:47], uint64(b.fileSize))
+		putUint64(enc[39:47], b.fileSize)
 		_, err := w.Write(enc)
 		if err != nil {
 			return err
@@ -70,7 +70,7 @@ func readCachedBeatmap(b []byte) *CachedBeatmap {
 	m.NoVideo = b[8] == 1
 	(&m.LastUpdate).UnmarshalBinary(b[9:24])
 	(&m.lastRequested).UnmarshalBinary(b[24:39])
-	m.fileSize = uint(readUint64(b[39:47]))
+	m.fileSize = readUint64(b[39:47])
 	m.isDownloaded = true
 	return m
 }
