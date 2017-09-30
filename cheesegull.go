@@ -15,9 +15,11 @@ import (
 	"github.com/osuripple/cheesegull/api"
 	"github.com/osuripple/cheesegull/dbmirror"
 	"github.com/osuripple/cheesegull/downloader"
+	"github.com/osuripple/cheesegull/housekeeper"
 	"github.com/osuripple/cheesegull/models"
 
 	// Components of the API we want to use
+	_ "github.com/osuripple/cheesegull/api/download"
 	_ "github.com/osuripple/cheesegull/api/metadata"
 )
 
@@ -61,6 +63,10 @@ func main() {
 		os.Exit(1)
 	}
 
+	// set up housekeeper
+	house := housekeeper.New()
+	house.StartCleaner()
+
 	// run mysql migrations
 	err = models.RunMigrations(db)
 	if err != nil {
@@ -72,5 +78,5 @@ func main() {
 	go dbmirror.DiscoverEvery(c, db, time.Hour*6, time.Second*20)
 
 	// create request handler
-	panic(http.ListenAndServe(*httpAddr, api.CreateHandler(db)))
+	panic(http.ListenAndServe(*httpAddr, api.CreateHandler(db, house, d)))
 }

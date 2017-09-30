@@ -41,7 +41,7 @@ func Set(c *api.Context) {
 		return
 	}
 
-	set, err := models.FetchSet(c.DB, id)
+	set, err := models.FetchSet(c.DB, id, true)
 	if err != nil {
 		fmt.Println("Error fetching beatmap", err)
 		c.WriteJSON(500, nil)

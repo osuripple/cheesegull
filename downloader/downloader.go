@@ -60,33 +60,15 @@ func (c *Client) HasVideo(setID int) (bool, error) {
 	return bytes.Contains(body, []byte(fmt.Sprintf(`href="/d/%dn"`, setID))), nil
 }
 
-// Download downloads a beatmap from the osu! website.
-// First reader is beatmap with video.
-// Second reader is beatmap without video.
-// If video is not in the beatmap, second reader will be nil and first reader
-// will be beatmap without video.
-func (c *Client) Download(setID int) (io.ReadCloser, io.ReadCloser, error) {
-	hasVideo, err := c.HasVideo(setID)
-	if err != nil {
-		return nil, nil, err
+// Download downloads a beatmap from the osu! website. noVideo specifies whether
+// we should request the beatmap to not have the video.
+func (c *Client) Download(setID int, noVideo bool) (io.ReadCloser, error) {
+	suffix := ""
+	if noVideo {
+		suffix = "n"
 	}
 
-	if hasVideo {
-		r1, err := c.getReader(strconv.Itoa(setID))
-		if err != nil {
-			return nil, nil, err
-		}
-		r2, err := c.getReader(strconv.Itoa(setID) + "n")
-		if err != nil {
-			// If r2 fails that is OK, however r1 must be closed, otherwise connections leak
-			r1.Close()
-			return nil, nil, err
-		}
-		return r1, r2, nil
-	}
-
-	r, err := c.getReader(strconv.Itoa(setID))
-	return r, nil, err
+	return c.getReader(strconv.Itoa(setID) + suffix)
 }
 
 // ErrNoRedirect is returned from Download when we were not redirect, thus

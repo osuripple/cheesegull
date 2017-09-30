@@ -67,7 +67,7 @@ LIMIT ?`,
 }
 
 // FetchSet retrieves a single set to show, alongside its children beatmaps.
-func FetchSet(db *sql.DB, id int) (*Set, error) {
+func FetchSet(db *sql.DB, id int, withChildren bool) (*Set, error) {
 	var s Set
 	err := db.QueryRow(`SELECT `+setFields+` FROM sets WHERE id = ? LIMIT 1`, id).Scan(
 		&s.ID, &s.RankedStatus, &s.ApprovedDate, &s.LastUpdate, &s.LastChecked,
@@ -82,6 +82,10 @@ func FetchSet(db *sql.DB, id int) (*Set, error) {
 		return nil, nil
 	default:
 		return nil, err
+	}
+
+	if !withChildren {
+		return &s, nil
 	}
 
 	rows, err := db.Query(`SELECT `+beatmapFields+` FROM beatmaps WHERE parent_set_id = ?`, s.ID)

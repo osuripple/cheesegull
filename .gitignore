@@ -1,1 +1,3 @@
 /cheesegull
+/data/*
+!/data/.gitkeep

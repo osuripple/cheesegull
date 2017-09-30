@@ -10,15 +10,19 @@ import (
 	"time"
 
 	"github.com/julienschmidt/httprouter"
+	"github.com/osuripple/cheesegull/downloader"
+	"github.com/osuripple/cheesegull/housekeeper"
 )
 
 // Context is the information that is passed to all request handlers in relation
 // to the request, and how to answer it.
 type Context struct {
-	Request *http.Request
-	DB      *sql.DB
-	writer  http.ResponseWriter
-	params  httprouter.Params
+	Request  *http.Request
+	DB       *sql.DB
+	House    *housekeeper.House
+	DLClient *downloader.Client
+	writer   http.ResponseWriter
+	params   httprouter.Params
 }
 
 // Write writes content to the response body.
@@ -72,7 +76,7 @@ func POST(path string, f func(c *Context)) {
 
 // CreateHandler creates a new http.Handler using the handlers registered
 // through GET and POST.
-func CreateHandler(db *sql.DB) http.Handler {
+func CreateHandler(db *sql.DB, house *housekeeper.House, dlc *downloader.Client) http.Handler {
 	r := httprouter.New()
 	for _, h := range handlers {
 		// Create local copy that we know won't change as the loop proceeds.
@@ -80,10 +84,12 @@ func CreateHandler(db *sql.DB) http.Handler {
 		r.Handle(h.method, h.path, func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 			start := time.Now()
 			ctx := &Context{
-				Request: r,
-				DB:      db,
-				writer:  w,
-				params:  p,
+				Request:  r,
+				DB:       db,
+				House:    house,
+				DLClient: dlc,
+				writer:   w,
+				params:   p,
 			}
 			h.f(ctx)
 			fmt.Printf("[R] %s %-10s %-4s %s\n",
