@@ -22,7 +22,7 @@ const (
 	// SetUpdaterWorkers is the number of goroutines which should take care of
 	// new batches. Keep in mind that this will be the number of maximum
 	// concurrent connections to the osu! API.
-	SetUpdaterWorkers = PerBatch / 10
+	SetUpdaterWorkers = PerBatch / 20
 )
 
 // hasVideo checks whether a beatmap set has a video.
