@@ -51,11 +51,9 @@ func (h *House) StartCleaner() {
 }
 
 func (h *House) cleanUp() {
-	toRemove := h.mapsToRemove()
+	fmt.Println("Running cleanup")
 
-	if len(toRemove) == 0 {
-		return
-	}
+	toRemove := h.mapsToRemove()
 
 	f, err := os.Create("cgbin.db")
 	if err != nil {
