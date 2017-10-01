@@ -100,7 +100,7 @@ func Search(c *api.Context) {
 		Mode:   sIntWithBounds(query["mode"], 0, 3),
 
 		Amount: intWithBounds(mustInt(query.Get("amount")), 1, 100, 50),
-		Offset: mustPositive(mustInt(query.Get("limit"))),
+		Offset: mustPositive(mustInt(query.Get("offset"))),
 	})
 	if err != nil {
 		c.Err(err)
