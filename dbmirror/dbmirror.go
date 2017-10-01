@@ -4,9 +4,11 @@ package dbmirror
 
 import (
 	"database/sql"
-	"fmt"
+	"log"
+	"os"
 	"time"
 
+	raven "github.com/getsentry/raven-go"
 	"github.com/osuripple/cheesegull/models"
 	osuapi "github.com/thehowl/go-osuapi"
 )
@@ -119,7 +121,7 @@ func setUpdater(c *osuapi.Client, db *sql.DB) {
 	for set := range setQueue {
 		err := updateSet(c, db, set)
 		if err != nil {
-			fmt.Printf("Error while updating set %d: %v\n", set.ID, err)
+			logError(err)
 		}
 	}
 }
@@ -134,7 +136,7 @@ func StartSetUpdater(c *osuapi.Client, db *sql.DB) {
 	for {
 		sets, err := models.FetchSetsForBatchUpdate(db, PerBatch)
 		if err != nil {
-			fmt.Println("Error while fetching sets:", err)
+			logError(err)
 			time.Sleep(NewBatchEvery)
 			continue
 		}
@@ -143,4 +145,17 @@ func StartSetUpdater(c *osuapi.Client, db *sql.DB) {
 		}
 		time.Sleep(NewBatchEvery)
 	}
+}
+
+var envSentryDSN = os.Getenv("SENTRY_DSN")
+
+// logError attempts to log an error to Sentry, as well as stdout.
+func logError(err error) {
+	if err == nil {
+		return
+	}
+	if envSentryDSN != "" {
+		raven.CaptureError(err, nil)
+	}
+	log.Println(err)
 }

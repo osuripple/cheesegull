@@ -2,7 +2,6 @@ package dbmirror
 
 import (
 	"database/sql"
-	"fmt"
 	"time"
 
 	"github.com/osuripple/cheesegull/models"
@@ -59,7 +58,7 @@ func DiscoverEvery(c *osuapi.Client, db *sql.DB, successWait, errorWait time.Dur
 		if err == nil {
 			time.Sleep(successWait)
 		} else {
-			fmt.Println("An error occurred while discovering beatmaps:", err)
+			logError(err)
 			time.Sleep(errorWait)
 		}
 	}

@@ -36,7 +36,7 @@ func Download(c *api.Context) {
 	// fetch beatmap set and make sure it exists.
 	set, err := models.FetchSet(c.DB, id, false)
 	if err != nil {
-		fmt.Println("Error fetching set", err)
+		c.Err(err)
 		errorMessage(c, 500, "Could not fetch set")
 		return
 	}
@@ -58,7 +58,7 @@ func Download(c *api.Context) {
 	if shouldDownload {
 		err := downloadBeatmap(c.DLClient, cbm, c.House)
 		if err != nil {
-			fmt.Println("Error downloading betmap:", err)
+			c.Err(err)
 			errorMessage(c, 500, "Internal error")
 			return
 		}
@@ -75,7 +75,7 @@ func Download(c *api.Context) {
 
 	f, err := cbm.File()
 	if err != nil {
-		fmt.Println("error opening beatmap file", err)
+		c.Err(err)
 		errorMessage(c, 500, "Internal error")
 		return
 	}
@@ -88,7 +88,7 @@ func Download(c *api.Context) {
 
 	_, err = io.Copy(c, f)
 	if err != nil {
-		fmt.Println("error copying", err)
+		c.Err(err)
 	}
 }
 

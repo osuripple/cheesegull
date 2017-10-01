@@ -20,6 +20,18 @@
   revision = "2efee857e7cfd4f3d0138cc3cbb1b4966962b93a"
 
 [[projects]]
+  name = "github.com/certifi/gocertifi"
+  packages = ["."]
+  revision = "3fd9e1adb12b72d2f3f82191d49be9b93c69f67c"
+  version = "2017.07.27"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/getsentry/raven-go"
+  packages = ["."]
+  revision = "1452f6376ddb15c546b6d7567e1d9518765391b5"
+
+[[projects]]
   name = "github.com/go-sql-driver/mysql"
   packages = ["."]
   revision = "a0583e0143b1624142adab07e0e97fe106d99561"
@@ -40,6 +52,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "a29306c7d349461a8ec2c7d31c7ec4f2a3e01c1f4673d47bcbc4eb7f69d69a76"
+  inputs-digest = "e6064d0a56e7a7e9d4e4f3975c1f5bb22fbd4c6e88e8bf84a5d2c0c104f36d2d"
   solver-name = "gps-cdcl"
   solver-version = 1

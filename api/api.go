@@ -6,10 +6,14 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
+	"os"
 	"time"
 
+	raven "github.com/getsentry/raven-go"
 	"github.com/julienschmidt/httprouter"
+
 	"github.com/osuripple/cheesegull/downloader"
 	"github.com/osuripple/cheesegull/housekeeper"
 )
@@ -55,6 +59,19 @@ func (c *Context) WriteJSON(code int, v interface{}) error {
 	c.WriteHeader("Content-Type", "application/json; charset=utf-8")
 	c.Code(code)
 	return json.NewEncoder(c.writer).Encode(v)
+}
+
+var envSentryDSN = os.Getenv("SENTRY_DSN")
+
+// Err attempts to log an error to Sentry, as well as stdout.
+func (c *Context) Err(err error) {
+	if err == nil {
+		return
+	}
+	if envSentryDSN != "" {
+		raven.CaptureError(err, nil)
+	}
+	log.Println(err)
 }
 
 type handlerPath struct {

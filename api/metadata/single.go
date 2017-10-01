@@ -21,7 +21,7 @@ func Beatmap(c *api.Context) {
 
 	bms, err := models.FetchBeatmaps(c.DB, id)
 	if err != nil {
-		fmt.Println("Error fetching beatmap", err)
+		c.Err(err)
 		c.WriteJSON(500, nil)
 		return
 	}

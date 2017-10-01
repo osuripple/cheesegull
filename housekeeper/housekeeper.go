@@ -4,9 +4,12 @@ package housekeeper
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"sort"
 	"sync"
+
+	raven "github.com/getsentry/raven-go"
 )
 
 // House manages the state of the cached beatmaps in the local filesystem.
@@ -57,7 +60,7 @@ func (h *House) cleanUp() {
 
 	f, err := os.Create("cgbin.db")
 	if err != nil {
-		fmt.Printf("error creating cgbin file: %v", err)
+		logError(err)
 		return
 	}
 
@@ -79,7 +82,7 @@ StateLoop:
 
 	f.Close()
 	if err != nil {
-		fmt.Printf("error writing to cgbin: %v", err)
+		logError(err)
 		return
 	}
 
@@ -94,7 +97,7 @@ StateLoop:
 		case err == nil, os.IsNotExist(err):
 			// silently ignore
 		default:
-			fmt.Printf("Error removing %q: %v", b.fileName(), err)
+			logError(err)
 		}
 	}
 }
@@ -170,4 +173,17 @@ func (h *House) LoadState() error {
 	h.stateMutex.Unlock()
 
 	return err
+}
+
+var envSentryDSN = os.Getenv("SENTRY_DSN")
+
+// logError attempts to log an error to Sentry, as well as stdout.
+func logError(err error) {
+	if err == nil {
+		return
+	}
+	if envSentryDSN != "" {
+		raven.CaptureError(err, nil)
+	}
+	log.Println(err)
 }
