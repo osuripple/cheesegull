@@ -5,6 +5,7 @@ package api
 import (
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"log"
 	"net/http"
 	"os"
@@ -107,6 +108,22 @@ func CreateHandler(db *sql.DB, house *housekeeper.House, dlc *downloader.Client)
 				writer:   w,
 				params:   p,
 			}
+			defer func() {
+				err := recover()
+				if err == nil {
+					return
+				}
+				switch err := err.(type) {
+				case error:
+					ctx.Err(err)
+				case stringer:
+					ctx.Err(errors.New(err.String()))
+				case string:
+					ctx.Err(errors.New(err))
+				default:
+					log.Println("PANIC", err)
+				}
+			}()
 			h.f(ctx)
 			log.Printf("[R] %-10s %-4s %s\n",
 				time.Since(start).String(),
@@ -116,4 +133,8 @@ func CreateHandler(db *sql.DB, house *housekeeper.House, dlc *downloader.Client)
 		})
 	}
 	return r
+}
+
+type stringer interface {
+	String() string
 }
