@@ -45,4 +45,5 @@ var migrations = [...]string{
 		ON DELETE CASCADE
 		ON UPDATE CASCADE
 );`,
+	`ALTER TABLE sets ADD FULLTEXT(artist, title, creator, source, tags);`,
 }

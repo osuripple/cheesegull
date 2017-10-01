@@ -46,24 +46,38 @@ func readBeatmapsFromRows(rows *sql.Rows, capacity int) ([]Beatmap, error) {
 	return bms, rows.Err()
 }
 
+func inClause(length int) string {
+	if length <= 0 {
+		return ""
+	}
+	b := make([]byte, length*3-2)
+	for i := 0; i < length; i++ {
+		b[i*3] = '?'
+		if i != length-1 {
+			b[i*3+1] = ','
+			b[i*3+2] = ' '
+		}
+	}
+	return string(b)
+}
+
+func sIntToSInterface(i []int) []interface{} {
+	args := make([]interface{}, len(i))
+	for idx, id := range i {
+		args[idx] = id
+	}
+	return args
+}
+
 // FetchBeatmaps retrieves a list of beatmap knowing their IDs.
 func FetchBeatmaps(db *sql.DB, ids ...int) ([]Beatmap, error) {
 	if len(ids) == 0 {
 		return nil, nil
 	}
 
-	q := `SELECT ` + beatmapFields + ` FROM beatmaps WHERE id IN (`
-	args := make([]interface{}, len(ids))
+	q := `SELECT ` + beatmapFields + ` FROM beatmaps WHERE id IN (` + inClause(len(ids)) + `)`
 
-	for idx, id := range ids {
-		if idx != 0 {
-			q += ", "
-		}
-		q += "?"
-		args[idx] = id
-	}
-
-	rows, err := db.Query(q+");", args...)
+	rows, err := db.Query(q, sIntToSInterface(ids)...)
 	if err != nil {
 		return nil, err
 	}
