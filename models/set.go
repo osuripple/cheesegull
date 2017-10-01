@@ -2,7 +2,6 @@ package models
 
 import (
 	"database/sql"
-	"fmt"
 	"time"
 )
 
@@ -122,7 +121,6 @@ func createSetModes(bms []Beatmap) (setModes uint8) {
 
 // CreateSet creates (and updates) a beatmap set in the database.
 func CreateSet(db *sql.DB, s Set) error {
-	fmt.Println("CreateSet", s.ID)
 	// delete existing set, if any.
 	// This is mostly a lazy way to make sure updates work as well.
 	err := DeleteSet(db, s.ID)

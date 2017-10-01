@@ -3,7 +3,6 @@
 package metadata
 
 import (
-	"fmt"
 	"strconv"
 	"strings"
 
@@ -43,7 +42,7 @@ func Set(c *api.Context) {
 
 	set, err := models.FetchSet(c.DB, id, true)
 	if err != nil {
-		fmt.Println("Error fetching beatmap", err)
+		c.Err(err)
 		c.WriteJSON(500, nil)
 		return
 	}

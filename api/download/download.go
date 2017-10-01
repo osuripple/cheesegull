@@ -4,6 +4,7 @@ package download
 import (
 	"fmt"
 	"io"
+	"log"
 	"strconv"
 	"time"
 
@@ -93,6 +94,8 @@ func Download(c *api.Context) {
 }
 
 func downloadBeatmap(c *downloader.Client, b *housekeeper.CachedBeatmap, house *housekeeper.House) error {
+	log.Println("[⬇️]", b.String())
+
 	var fileSize uint64
 	defer func() {
 		// We need to wrap this inside a function because this way the arguments

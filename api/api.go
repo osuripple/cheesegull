@@ -5,7 +5,6 @@ package api
 import (
 	"database/sql"
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -109,8 +108,7 @@ func CreateHandler(db *sql.DB, house *housekeeper.House, dlc *downloader.Client)
 				params:   p,
 			}
 			h.f(ctx)
-			fmt.Printf("[R] %s %-10s %-4s %s\n",
-				time.Now().Format("15:04:05"),
+			log.Printf("[R] %-10s %-4s %s\n",
 				time.Since(start).String(),
 				r.Method,
 				r.URL.Path,

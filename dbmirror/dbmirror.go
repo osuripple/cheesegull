@@ -18,7 +18,7 @@ const (
 	// of requests and another.
 	NewBatchEvery = time.Minute
 	// PerBatch is the amount of requests and updates every batch contains.
-	PerBatch = 80
+	PerBatch = 100
 	// SetUpdaterWorkers is the number of goroutines which should take care of
 	// new batches. Keep in mind that this will be the number of maximum
 	// concurrent connections to the osu! API.
@@ -142,6 +142,9 @@ func StartSetUpdater(c *osuapi.Client, db *sql.DB) {
 		}
 		for _, set := range sets {
 			setQueue <- set
+		}
+		if len(sets) > 0 {
+			log.Println("[U] Updating sets, the oldest LastChecked is", sets[0].LastChecked)
 		}
 		time.Sleep(NewBatchEvery)
 	}

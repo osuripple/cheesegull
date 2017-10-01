@@ -3,7 +3,6 @@
 package housekeeper
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"sort"
@@ -54,7 +53,7 @@ func (h *House) StartCleaner() {
 }
 
 func (h *House) cleanUp() {
-	fmt.Println("Running cleanup")
+	log.Println("[C] Running cleanup")
 
 	toRemove := h.mapsToRemove()
 
