@@ -34,11 +34,19 @@ cache, then well, as you can imagine, it is served straight from there. Oh, yes,
 multiple people downloading a not cached beatmap at the same time is a case we
 handle. Or should be able to handle, at least.
 
+## [API docs](http://docs.ripple.moe/docs/cheesegull/cheesegull-api)
+
 ## Getting Started
 
-No binaries yet, but there will be when 2.0 is released. For the moment, if you
-have go installed, it should be as easy as `go get github.com/osuripple/cheesegull`.
-`cheesegull --help` will show a list of useful command line arguments.
+You can find binaries of the latest release
+[here.](https://github.com/osuripple/cheesegull/releases/latest)
+
+If you want to compile from source, if you have Go installed it should only be
+a `go get github.com/osuripple/cheesegull` away.
+
+The only requirements at the moment are a MySQL server and an osu! account.
+Check out `cheesegull --help` to see how you can set them up for cheesegull to
+work properly.
 
 ## Contributing
 
