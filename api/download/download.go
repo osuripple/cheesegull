@@ -79,6 +79,7 @@ func Download(c *api.Context) {
 		errorMessage(c, 500, "Internal error")
 		return
 	}
+	defer f.Close()
 
 	c.WriteHeader("Content-Type", "application/octet-stream")
 	c.WriteHeader("Content-Disposition", fmt.Sprintf("attachment; filename=%q", fmt.Sprintf("%d %s - %s.osz", set.ID, set.Artist, set.Title)))

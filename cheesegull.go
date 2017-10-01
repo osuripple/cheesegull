@@ -65,6 +65,11 @@ func main() {
 
 	// set up housekeeper
 	house := housekeeper.New()
+	err = house.LoadState()
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
 	house.StartCleaner()
 
 	// run mysql migrations

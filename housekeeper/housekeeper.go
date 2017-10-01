@@ -155,3 +155,21 @@ func sortByLastRequested(b []*CachedBeatmap) {
 		return r
 	})
 }
+
+// LoadState attempts to load the state from cgbin.db
+func (h *House) LoadState() error {
+	f, err := os.Open("cgbin.db")
+	switch {
+	case os.IsNotExist(err):
+		return nil
+	case err != nil:
+		return err
+	}
+	defer f.Close()
+
+	h.stateMutex.Lock()
+	h.state, err = readBeatmaps(f)
+	h.stateMutex.Unlock()
+
+	return err
+}
