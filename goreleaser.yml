@@ -1,0 +1,21 @@
+build:
+  goos:
+    - windows
+    - darwin
+    - linux
+  goarch:
+    - 386
+    - amd64
+    - arm
+    - arm64
+archive:
+  replacements:
+    amd64: 64bit
+    386: 32bit
+  format_overrides:
+    - goos: windows
+      format: zip
+snapshot:
+  name_template: devel
+release:
+  draft: true
