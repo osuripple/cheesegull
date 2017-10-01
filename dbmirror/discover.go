@@ -2,6 +2,7 @@ package dbmirror
 
 import (
 	"database/sql"
+	"log"
 	"time"
 
 	"github.com/osuripple/cheesegull/models"
@@ -14,12 +15,16 @@ func Discover(c *osuapi.Client, db *sql.DB) error {
 	if err != nil {
 		return err
 	}
+	log.Println("[D] Starting discovery with ID", id)
 	// failedAttempts is the number of consecutive failed attempts at fetching a
 	// beatmap (by 'failed', in this case we mean exclusively when a request to
 	// get_beatmaps returns no beatmaps)
 	failedAttempts := 0
 	for failedAttempts < 4096 {
 		id++
+		if id%64 == 0 {
+			log.Println("[D]", id)
+		}
 		bms, err := c.GetBeatmaps(osuapi.GetBeatmapsOpts{
 			BeatmapSetID: id,
 		})
