@@ -49,7 +49,7 @@ func SearchSets(db *sql.DB, opts SearchOptions) ([]Set, error) {
 
 	// set order by
 	if opts.Query == "" {
-		setsQuery += "ORDER BY id ASC "
+		setsQuery += "ORDER BY id DESC "
 	} else {
 		setsQuery += "AND MATCH(artist, title, creator, source, tags) AGAINST (? IN NATURAL LANGUAGE MODE) ORDER BY relevance DESC "
 		args = append(args, opts.Query)
