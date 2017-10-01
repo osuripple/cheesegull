@@ -93,7 +93,11 @@ func Download(c *api.Context) {
 
 func downloadBeatmap(c *downloader.Client, b *housekeeper.CachedBeatmap, house *housekeeper.House) error {
 	var fileSize uint64
-	defer b.DownloadCompleted(fileSize, house)
+	defer func() {
+		// We need to wrap this inside a function because this way the arguments
+		// to DownloadCompleted are actually evaluated during the defer call.
+		b.DownloadCompleted(fileSize, house)
+	}()
 
 	// Start downloading.
 	r, err := c.Download(b.ID, b.NoVideo)
