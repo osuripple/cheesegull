@@ -29,6 +29,7 @@ var (
 	osuPassword = kingpin.Flag("osu-password", "osu! password (for downloading and fetching whether a beatmap has a video)").Short('p').Envar("OSU_PASSWORD").String()
 	mysqlDSN    = kingpin.Flag("mysql-dsn", "DSN of MySQL").Short('m').Default("root@/cheesegull").Envar("MYSQL_DSN").String()
 	httpAddr    = kingpin.Flag("http-addr", "Address on which to take HTTP requests.").Short('a').Default("127.0.0.1:62011").String()
+	maxDisk     = kingpin.Flag("max-disk", "Maximum number of GB used by beatmap cache.").Default("10").Envar("MAXIMUM_DISK").Float64()
 )
 
 func addTimeParsing(dsn string) string {
@@ -70,6 +71,7 @@ func main() {
 		fmt.Println(err)
 		os.Exit(1)
 	}
+	house.MaxSize = uint64(float64(1024*1024*1024) * (*maxDisk))
 	house.StartCleaner()
 
 	// run mysql migrations
