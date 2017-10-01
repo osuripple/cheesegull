@@ -1,25 +1,60 @@
 <p align="center"><img src="https://y.zxq.co/jobeei.png"></p>
 
-# CheeseGull (Woo branch)
+# CheeseGull
 
-This is the branch for the v2 of CheeseGull: CheeseGull v2 Woo. Seeing as this
-is a major release, everything has been rewritten from scratch, there are some
-breaking changes and even the project's aim has been shifted from being a
-beatmap mirror to being a beatmap cache middleman and a "slave" beatmap
-database from the official beatmap database through the osu! API.
+CheeseGull creates an unofficial "slave" database of the official osu! beatmap
+database, trying to keep every beatmap up to date as much as possible, as well
+as a cache middleman for osz files.
 
-The goal of the project is to work as a sort of mirror from osu!
-**for osu! private servers** (like, well, Ripple). The reason why the focus
-shifted from being a full beatmap mirror to only "caching" beatmaps is that
-HDD/"SATA" servers are starting to become lesser and lesser, and often hell
-expensive. With some luck, we got our hands on a So You Start 15€ ARM server
-with a couple of terabytes. Seemed a perfect fit to our needs, until it wasn't.
-Mostly because of the relatively low dl/ul speed that often made the server
-inaccessible. Thus, CheeseGull Woo was written having in mind a Scaleway server
-with a 150 GB cache SSD. This makes our expenses on a "mirror" server much lower
-while having a server with much higher upload speeds (from our tests,
-scaleway if you're lucky enough can get up to 1 Gbit). We will probably have
-some slower downloads when the beatmap is not in the cache (seeing as we need to
-download the beatmap and send it to the user), however the speed will be
-considerably higher when the beatmap is already in the cache, which should be
-most cases.
+The main purpose for this is, as you can see from the owner of the repository,
+for running a sort of "beatmap mirror" for Ripple's osu! direct. We originally
+used an actual osu! beatmap mirror which had all of the beatmaps on osu!
+downloaded, but it ended up taking wayyyy too much space, and the cheapest
+server we could find that had at least 2 TB of HDD had an upload speed of
+30mbit - as you can guess, this meant that for the Ripple users who didn't have
+a third world connection the download speed was pretty poor.
+
+CheeseGull tries to hold a replica of the osu! database as updated as possible.
+Though of course, not having any way to see the latest updated beatmaps, or have
+a system for subscribing to updates to beatmap, or anything else which could
+help us identify what has been updated recently makes it very hard to do keep
+an updated copy at all times (Takeaway: the osu! API is completely shit). In
+order to do this, CheeseGull updates WIP, Pending or Qualified beatmaps when
+at least 30 minutes have passed since the time they were checked, whereas for
+all other beatmaps (including Graveyard, Ranked, Approved, etc) at least 4 days
+must have passed. This is not a problem for ranked/approved (it's highly
+unlikely for a ranked beatmap to ever change state, and Graveyard beatmaps
+are rarely resurrected, so there's that).
+
+Beatmap downloads are also provided by going at `/d/<id>`. In case the beatmap
+is not stored in the local cache, the beatmap will be downloaded on-the-fly
+(this assumes the machine's internet connection is fast enough to download a
+beatmap before a HTTP timeout happens). In case the beatmap already is in the
+cache, then well, as you can imagine, it is served straight from there. Oh, yes,
+multiple people downloading a not cached beatmap at the same time is a case we
+handle. Or should be able to handle, at least.
+
+## Getting Started
+
+No binaries yet, but there will be when 2.0 is released. For the moment, if you
+have go installed, it should be as easy as `go get github.com/osuripple/cheesegull`.
+`cheesegull --help` will show a list of useful command line arguments.
+
+## Contributing
+
+No strict contribution guide at the moment. Just fork, clone, then
+
+```sh
+git checkout -b your-new-feature
+code . # make changes
+git add .
+git commit -m "Added thing"
+git push origin your-new-feature
+```
+
+Go to the GitHub website, and create a pull request.
+
+## License
+
+Seeing as this project is not meant exclusively for usage by Ripple, the license,
+unlike most other Ripple projects, is [MIT](LICENSE).
