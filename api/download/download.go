@@ -106,6 +106,9 @@ func downloadBeatmap(c *downloader.Client, b *housekeeper.CachedBeatmap, house *
 	// Start downloading.
 	r, err := c.Download(b.ID, b.NoVideo)
 	if err != nil {
+		if err == downloader.ErrNoRedirect {
+			return nil
+		}
 		return err
 	}
 	defer r.Close()
@@ -119,7 +122,7 @@ func downloadBeatmap(c *downloader.Client, b *housekeeper.CachedBeatmap, house *
 
 	fSizeRaw, err := io.Copy(f, r)
 	fileSize = uint64(fSizeRaw)
-	if err != nil && err != downloader.ErrNoRedirect {
+	if err != nil {
 		return err
 	}
 	return nil
