@@ -46,4 +46,6 @@ var migrations = [...]string{
 		ON UPDATE CASCADE
 );`,
 	`ALTER TABLE sets ADD FULLTEXT(artist, title, creator, source, tags);`,
+	`ALTER TABLE beatmaps MODIFY difficulty_rating DECIMAL(20, 15);
+`,
 }
