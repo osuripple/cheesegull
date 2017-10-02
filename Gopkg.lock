@@ -46,12 +46,12 @@
 [[projects]]
   name = "github.com/thehowl/go-osuapi"
   packages = ["."]
-  revision = "83043565096480f5407bab25a52d7959861cb835"
-  version = "1.1.0"
+  revision = "53c7f6b9e5f66f22244adff2e61c2003ef4b37cc"
+  version = "1.1.1"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "e6064d0a56e7a7e9d4e4f3975c1f5bb22fbd4c6e88e8bf84a5d2c0c104f36d2d"
+  inputs-digest = "783272a0d9e62c2046fb5a2b5a02f3f58f307a7a2d9be21ff74b3627281f1c89"
   solver-name = "gps-cdcl"
   solver-version = 1
