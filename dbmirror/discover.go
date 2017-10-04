@@ -25,9 +25,21 @@ func Discover(c *osuapi.Client, db *sql.DB) error {
 		if id%64 == 0 {
 			log.Println("[D]", id)
 		}
-		bms, err := c.GetBeatmaps(osuapi.GetBeatmapsOpts{
-			BeatmapSetID: id,
-		})
+		var (
+			err error
+			bms []osuapi.Beatmap
+		)
+		for i := 0; i < 5; i++ {
+			bms, err = c.GetBeatmaps(osuapi.GetBeatmapsOpts{
+				BeatmapSetID: id,
+			})
+			if err == nil {
+				break
+			}
+			if i >= 5 {
+				return err
+			}
+		}
 		if err != nil {
 			return err
 		}

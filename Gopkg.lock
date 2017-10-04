@@ -46,8 +46,8 @@
 [[projects]]
   name = "github.com/thehowl/go-osuapi"
   packages = ["."]
-  revision = "53c7f6b9e5f66f22244adff2e61c2003ef4b37cc"
-  version = "1.1.1"
+  revision = "b918f5da725805d82655d6c402eb3fc0517c072f"
+  version = "1.1.2"
 
 [solve-meta]
   analyzer-name = "dep"

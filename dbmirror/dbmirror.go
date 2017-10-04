@@ -80,11 +80,20 @@ func setFromOsuAPIBeatmap(b osuapi.Beatmap) models.Set {
 }
 
 func updateSet(c *osuapi.Client, db *sql.DB, set models.Set) error {
-	bms, err := c.GetBeatmaps(osuapi.GetBeatmapsOpts{
-		BeatmapSetID: set.ID,
-	})
-	if err != nil {
-		return err
+	var (
+		err error
+		bms []osuapi.Beatmap
+	)
+	for i := 0; i < 5; i++ {
+		bms, err = c.GetBeatmaps(osuapi.GetBeatmapsOpts{
+			BeatmapSetID: set.ID,
+		})
+		if err == nil {
+			break
+		}
+		if i >= 5 {
+			return err
+		}
 	}
 	if len(bms) == 0 {
 		// set has been deleted from osu!, so we do the same thing
