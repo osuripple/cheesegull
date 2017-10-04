@@ -69,7 +69,7 @@ func (c *Context) Err(err error) {
 		return
 	}
 	if envSentryDSN != "" {
-		raven.CaptureError(err, nil)
+		raven.CaptureError(err, nil, raven.NewHttp(c.Request))
 	}
 	log.Println(err)
 }
