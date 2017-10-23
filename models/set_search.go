@@ -32,9 +32,15 @@ func (o SearchOptions) setModes() (total uint8) {
 
 // SearchSets retrieves sets, filtering them using SearchOptions.
 func SearchSets(db *sql.DB, opts SearchOptions) ([]Set, error) {
-	setsQuery := "SELECT " + setFields +
-		", MATCH(artist, title, creator, source, tags) AGAINST (? IN NATURAL LANGUAGE MODE) AS relevance FROM sets WHERE 1 "
-	args := []interface{}{opts.Query}
+	setsQuery := "SELECT " + setFields
+	var args []interface{}
+	if opts.Query != "" {
+		// always placing this in the query significantly slows everything down
+		setsQuery += ", MATCH(artist, title, creator, source, tags) AGAINST (? IN NATURAL LANGUAGE MODE) AS relevance "
+		// we don't need to do append because this is always our first item
+		args = []interface{}{opts.Query}
+	}
+	setsQuery += " FROM sets WHERE 1 "
 
 	// add filters to query
 	if len(opts.Status) != 0 {
@@ -73,12 +79,15 @@ func SearchSets(db *sql.DB, opts SearchOptions) ([]Set, error) {
 	// find all beatmaps, but leave children aside for the moment.
 	for rows.Next() {
 		var s Set
-		var rel float64
-		err = rows.Scan(
+		scanInto := []interface{}{
 			&s.ID, &s.RankedStatus, &s.ApprovedDate, &s.LastUpdate, &s.LastChecked,
 			&s.Artist, &s.Title, &s.Creator, &s.Source, &s.Tags, &s.HasVideo, &s.Genre,
-			&s.Language, &s.Favourites, &rel,
-		)
+			&s.Language, &s.Favourites,
+		}
+		if opts.Query != "" {
+			scanInto = append(scanInto, new(float64))
+		}
+		err = rows.Scan(scanInto...)
 		if err != nil {
 			return nil, err
 		}
