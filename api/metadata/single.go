@@ -94,7 +94,7 @@ func sIntWithBounds(strs []string, min, max int) []int {
 // Search does a search on the sets available in the database.
 func Search(c *api.Context) {
 	query := c.Request.URL.Query()
-	sets, err := models.SearchSets(c.DB, models.SearchOptions{
+	sets, err := models.SearchSets(c.DB, c.SearchDB, models.SearchOptions{
 		Status: sIntWithBounds(query["status"], -2, 4),
 		Query:  query.Get("query"),
 		Mode:   sIntWithBounds(query["mode"], 0, 3),

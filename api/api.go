@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"runtime/debug"
 	"time"
 
 	raven "github.com/getsentry/raven-go"
@@ -23,6 +24,7 @@ import (
 type Context struct {
 	Request  *http.Request
 	DB       *sql.DB
+	SearchDB *sql.DB
 	House    *housekeeper.House
 	DLClient *downloader.Client
 	writer   http.ResponseWriter
@@ -93,7 +95,7 @@ func POST(path string, f func(c *Context)) {
 
 // CreateHandler creates a new http.Handler using the handlers registered
 // through GET and POST.
-func CreateHandler(db *sql.DB, house *housekeeper.House, dlc *downloader.Client) http.Handler {
+func CreateHandler(db, searchDB *sql.DB, house *housekeeper.House, dlc *downloader.Client) http.Handler {
 	r := httprouter.New()
 	for _, h := range handlers {
 		// Create local copy that we know won't change as the loop proceeds.
@@ -103,6 +105,7 @@ func CreateHandler(db *sql.DB, house *housekeeper.House, dlc *downloader.Client)
 			ctx := &Context{
 				Request:  r,
 				DB:       db,
+				SearchDB: searchDB,
 				House:    house,
 				DLClient: dlc,
 				writer:   w,
@@ -123,6 +126,7 @@ func CreateHandler(db *sql.DB, house *housekeeper.House, dlc *downloader.Client)
 				default:
 					log.Println("PANIC", err)
 				}
+				debug.PrintStack()
 			}()
 			h.f(ctx)
 			log.Printf("[R] %-10s %-4s %s\n",

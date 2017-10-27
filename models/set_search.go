@@ -1,8 +1,11 @@
 package models
 
 import (
+	"bytes"
 	"database/sql"
 	"fmt"
+	"strconv"
+	"strings"
 )
 
 // SearchOptions are options that can be passed to SearchSets for filtering
@@ -30,74 +33,96 @@ func (o SearchOptions) setModes() (total uint8) {
 	return
 }
 
-// SearchSets retrieves sets, filtering them using SearchOptions.
-func SearchSets(db *sql.DB, opts SearchOptions) ([]Set, error) {
-	setsQuery := "SELECT " + setFields
-	var args []interface{}
-	if opts.Query != "" {
-		// always placing this in the query significantly slows everything down
-		setsQuery += ", MATCH(artist, title, creator, source, tags) AGAINST (? IN NATURAL LANGUAGE MODE) AS relevance "
-		// we don't need to do append because this is always our first item
-		args = []interface{}{opts.Query}
+var mysqlStringReplacer = strings.NewReplacer(
+	`\`, `\\`,
+	`"`, `\"`,
+	`'`, `\'`,
+	"\x00", `\0`,
+	"\n", `\n`,
+	"\r", `\r`,
+	"\x1a", `\Z`,
+)
+
+func sIntCommaSeparated(nums []int) string {
+	b := bytes.Buffer{}
+	for idx, num := range nums {
+		b.WriteString(strconv.Itoa(num))
+		if idx != len(nums)-1 {
+			b.WriteString(", ")
+		}
 	}
-	setsQuery += " FROM sets WHERE 1 "
+	return b.String()
+}
+
+// SearchSets retrieves sets, filtering them using SearchOptions.
+func SearchSets(db, searchDB *sql.DB, opts SearchOptions) ([]Set, error) {
+	setIDsQuery := "SELECT id FROM cg WHERE "
 
 	// add filters to query
+	// Yes. I know. Prepared statements. But Sphinx doesn't like them, so
+	// bummer.
+	setIDsQuery += "MATCH('" + mysqlStringReplacer.Replace(opts.Query) + "') "
 	if len(opts.Status) != 0 {
-		setsQuery += "AND ranked_status IN (" + inClause(len(opts.Status)) + ") "
-		args = append(args, sIntToSInterface(opts.Status)...)
+		setIDsQuery += "AND ranked_status IN (" + sIntCommaSeparated(opts.Status) + ") "
 	}
 	if len(opts.Mode) != 0 {
-		setsQuery += "AND (set_modes & ?) = ? "
-		sm := opts.setModes()
-		args = append(args, sm, sm)
-	}
-
-	// set order by
-	if opts.Query == "" {
-		setsQuery += "ORDER BY id DESC "
-	} else {
-		setsQuery += "AND MATCH(artist, title, creator, source, tags) AGAINST (? IN NATURAL LANGUAGE MODE) ORDER BY relevance DESC "
-		args = append(args, opts.Query)
+		sm := strconv.Itoa(int(opts.setModes()))
+		setIDsQuery += "AND (set_modes & " + sm + ") = " + sm + " "
 	}
 
 	// set limit
-	setsQuery += fmt.Sprintf("LIMIT %d, %d", opts.Offset, opts.Amount)
+	setIDsQuery += fmt.Sprintf("LIMIT %d, %d OPTION ranker=sph04", opts.Offset, opts.Amount)
 
 	// fetch rows
-	rows, err := db.Query(setsQuery, args...)
+	rows, err := searchDB.Query(setIDsQuery)
 	if err != nil {
 		return nil, err
 	}
 
-	sets := make([]Set, 0, opts.Amount)
-	// setIDs is used to make the IN statement later on. setMap is used for
-	// finding the beatmap to which append the child.
+	// from the rows we will retrieve the IDs of all our sets.
+	// we also pre-create the slices containing the sets we will fill later on
+	// when we fetch the actual data.
 	setIDs := make([]int, 0, opts.Amount)
-	setMap := make(map[int]*Set, opts.Amount)
+	sets := make([]Set, 0, opts.Amount)
+	// setMap, having an ID, points to a position of a set contained in sets.
+	setMap := make(map[int]int, opts.Amount)
+	for rows.Next() {
+		var id int
+		err = rows.Scan(&id)
+		if err != nil {
+			return nil, err
+		}
+		setIDs = append(setIDs, id)
+		sets = append(sets, Set{})
+		setMap[id] = len(sets) - 1
+	}
+
+	// short circuit: there are no sets
+	if len(sets) == 0 {
+		return []Set{}, nil
+	}
+
+	setsQuery := "SELECT " + setFields + " FROM sets WHERE id IN (" + inClause(len(setIDs)) + ")"
+	args := sIntToSInterface(setIDs)
+
+	rows, err = db.Query(setsQuery, args...)
+
+	if err != nil {
+		return nil, err
+	}
 
 	// find all beatmaps, but leave children aside for the moment.
 	for rows.Next() {
 		var s Set
-		scanInto := []interface{}{
+		err = rows.Scan(
 			&s.ID, &s.RankedStatus, &s.ApprovedDate, &s.LastUpdate, &s.LastChecked,
 			&s.Artist, &s.Title, &s.Creator, &s.Source, &s.Tags, &s.HasVideo, &s.Genre,
 			&s.Language, &s.Favourites,
-		}
-		if opts.Query != "" {
-			scanInto = append(scanInto, new(float64))
-		}
-		err = rows.Scan(scanInto...)
+		)
 		if err != nil {
 			return nil, err
 		}
-		sets = append(sets, s)
-		setIDs = append(setIDs, s.ID)
-		setMap[s.ID] = &sets[len(sets)-1]
-	}
-
-	if len(sets) == 0 {
-		return []Set{}, nil
+		sets[setMap[s.ID]] = s
 	}
 
 	rows, err = db.Query(
@@ -119,11 +144,11 @@ func SearchSets(db *sql.DB, opts SearchOptions) ([]Set, error) {
 		if err != nil {
 			return nil, err
 		}
-		parentSet := setMap[b.ParentSetID]
-		if parentSet == nil {
+		parentSet, ok := setMap[b.ParentSetID]
+		if !ok {
 			continue
 		}
-		parentSet.ChildrenBeatmaps = append(parentSet.ChildrenBeatmaps, b)
+		sets[parentSet].ChildrenBeatmaps = append(sets[parentSet].ChildrenBeatmaps, b)
 	}
 
 	return sets, nil

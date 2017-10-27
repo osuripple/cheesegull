@@ -62,6 +62,15 @@ git push origin your-new-feature
 
 Go to the GitHub website, and create a pull request.
 
+## Sphinx set-up
+
+If you want to test search using Sphinx, you will need to set it up.
+[Here is the sphinx.conf used in production, you probably only need to change lines 23-35](https://gist.github.com/thehowl/3dc046e2a0ab93fa1ffe5f0eca085905)
+
+(No, we're not using ElasticSearch. Search is meant to be fast and not take too
+much memory. Any Java solution can thus be tossed away since it does not suit
+these basic two requirements.)
+
 ## License
 
 Seeing as this project is not meant exclusively for usage by Ripple, the license,
