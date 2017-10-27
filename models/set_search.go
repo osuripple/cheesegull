@@ -67,7 +67,7 @@ func SearchSets(db, searchDB *sql.DB, opts SearchOptions) ([]Set, error) {
 	}
 	if len(opts.Mode) != 0 {
 		sm := strconv.Itoa(int(opts.setModes()))
-		setIDsQuery += "AND (set_modes & " + sm + ") = " + sm + " "
+		setIDsQuery += "AND set_modes = " + sm + " "
 	}
 
 	// set limit
