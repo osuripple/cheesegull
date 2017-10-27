@@ -48,4 +48,5 @@ var migrations = [...]string{
 	`ALTER TABLE sets ADD FULLTEXT(artist, title, creator, source, tags);`,
 	`ALTER TABLE beatmaps MODIFY difficulty_rating DECIMAL(20, 15);
 `,
+	`ALTER TABLE sets DROP INDEX artist;`,
 }

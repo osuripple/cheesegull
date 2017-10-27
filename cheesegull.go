@@ -44,7 +44,7 @@ func addTimeParsing(dsn string) string {
 	if strings.Contains(dsn, "?") {
 		sep = "&"
 	}
-	dsn += sep + "parseTime=true"
+	dsn += sep + "parseTime=true&multiStatements=true"
 	return dsn
 }
 
