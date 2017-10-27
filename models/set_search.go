@@ -71,7 +71,7 @@ func SearchSets(db, searchDB *sql.DB, opts SearchOptions) ([]Set, error) {
 	}
 
 	// set limit
-	setIDsQuery += fmt.Sprintf("LIMIT %d, %d OPTION ranker=sph04", opts.Offset, opts.Amount)
+	setIDsQuery += fmt.Sprintf("ORDER BY WEIGHT() DESC, id DESC LIMIT %d, %d OPTION ranker=sph04", opts.Offset, opts.Amount)
 
 	// fetch rows
 	rows, err := searchDB.Query(setIDsQuery)
