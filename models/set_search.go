@@ -56,7 +56,8 @@ func sIntCommaSeparated(nums []int) string {
 
 // SearchSets retrieves sets, filtering them using SearchOptions.
 func SearchSets(db, searchDB *sql.DB, opts SearchOptions) ([]Set, error) {
-	setIDsQuery := "SELECT id FROM cg WHERE "
+	sm := strconv.Itoa(int(opts.setModes()))
+	setIDsQuery := "SELECT id, set_modes & " + sm + " AS valid_set_modes FROM cg WHERE "
 
 	// add filters to query
 	// Yes. I know. Prepared statements. But Sphinx doesn't like them, so
@@ -66,8 +67,10 @@ func SearchSets(db, searchDB *sql.DB, opts SearchOptions) ([]Set, error) {
 		setIDsQuery += "AND ranked_status IN (" + sIntCommaSeparated(opts.Status) + ") "
 	}
 	if len(opts.Mode) != 0 {
-		sm := strconv.Itoa(int(opts.setModes()))
-		setIDsQuery += "AND set_modes = " + sm + " "
+		// This is a hack. Apparently, Sphinx does not support AND bitwise
+		// operations in the WHERE clause, so we're placing that in the SELECT
+		// clause and only making sure it's correct in this place.
+		setIDsQuery += "AND valid_set_modes = " + sm + " "
 	}
 
 	// set limit
@@ -88,7 +91,7 @@ func SearchSets(db, searchDB *sql.DB, opts SearchOptions) ([]Set, error) {
 	setMap := make(map[int]int, opts.Amount)
 	for rows.Next() {
 		var id int
-		err = rows.Scan(&id)
+		err = rows.Scan(&id, new(int))
 		if err != nil {
 			return nil, err
 		}
