@@ -52,6 +52,7 @@ func main() {
 	kingpin.Parse()
 
 	fmt.Println("CheeseGull", Version)
+	api.Version = Version
 
 	// set up osuapi client
 	c := osuapi.NewClient(*osuAPIKey)
