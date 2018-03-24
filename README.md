@@ -67,6 +67,10 @@ Go to the GitHub website, and create a pull request.
 If you want to test search using Sphinx, you will need to set it up.
 [Here is the sphinx.conf used in production, you probably only need to change lines 23-35](https://gist.github.com/thehowl/3dc046e2a0ab93fa1ffe5f0eca085905)
 
+To index the data, you'd then need to run `sudo indexer --all`. If you want to run
+the indexer without having to shutdown sphinx, run `sudo indexer --all --rotate`.
+In production, this is run as a cronjob every 5 minutes.
+
 (No, we're not using ElasticSearch. Search is meant to be fast and not take too
 much memory. Any Java solution can thus be tossed away since it does not suit
 these basic two requirements.)
