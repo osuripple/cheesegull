@@ -30,11 +30,11 @@ func LogIn(username, password string) (*Client, error) {
 	vals.Add("password", password)
 	vals.Add("autologin", "on")
 	vals.Add("login", "login")
-	loginResp, err := c.PostForm("https://old.ppy.sh/forum/ucp.php?mode=login", vals)
+	loginResp, err := c.PostForm("https://osu.ppy.sh/forum/ucp.php?mode=login", vals)
 	if err != nil {
 		return nil, err
 	}
-	if loginResp.Request.URL.Path != "/" {
+	if loginResp.Request.URL.Path != "/" && loginResp.Request.URL.Path != "/home" {
 		return nil, errors.New("downloader: Login: could not log in (was not redirected to index)")
 	}
 	return (*Client)(c), nil
@@ -48,7 +48,7 @@ type Client http.Client
 func (c *Client) HasVideo(setID int) (bool, error) {
 	h := (*http.Client)(c)
 
-	page, err := h.Get(fmt.Sprintf("https://old.ppy.sh/s/%d", setID))
+	page, err := h.Get(fmt.Sprintf("https://osu.ppy.sh/s/%d", setID))
 	if err != nil {
 		return false, err
 	}
@@ -78,11 +78,11 @@ var ErrNoRedirect = errors.New("no redirect happened, beatmap could not be downl
 func (c *Client) getReader(str string) (io.ReadCloser, error) {
 	h := (*http.Client)(c)
 
-	resp, err := h.Get("https://old.ppy.sh/d/" + str)
+	resp, err := h.Get("https://osu.ppy.sh/d/" + str)
 	if err != nil {
 		return nil, err
 	}
-	if resp.Request.URL.Host == "old.ppy.sh" {
+	if resp.Request.URL.Host == "osu.ppy.sh" {
 		resp.Body.Close()
 		return nil, ErrNoRedirect
 	}
