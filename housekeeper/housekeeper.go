@@ -102,6 +102,12 @@ StateLoop:
 }
 
 func (h *House) mapsToRemove() []*CachedBeatmap {
+	badBeatmaps := h.badBeatmaps()
+	if len(badBeatmaps) > 0 {
+		log.Println("[C] Bad Beatmaps", len(badBeatmaps))
+		return badBeatmaps
+	}
+
 	totalSize, removable := h.stateSizeAndRemovableMaps()
 
 	if totalSize <= h.MaxSize {
@@ -124,6 +130,20 @@ func (h *House) mapsToRemove() []*CachedBeatmap {
 	}
 
 	return toRemove
+}
+
+func (h *House) badBeatmaps() (removable []*CachedBeatmap) {
+	h.stateMutex.RLock()
+	for _, b := range h.state {
+		if !b.IsDownloaded() {
+			continue
+		}
+		if b.FileSize() < 10000 {
+			removable = append(removable, b)
+		}
+	}
+	h.stateMutex.RUnlock()
+	return
 }
 
 // i hate verbose names myself, but it was very hard to come up with something
