@@ -138,7 +138,8 @@ func (h *House) badBeatmaps() (removable []*CachedBeatmap) {
 		if !b.IsDownloaded() {
 			continue
 		}
-		if b.FileSize() < 10000 {
+		fsize := b.FileSize()
+		if fsize > 0 && fsize < 10000 {
 			removable = append(removable, b)
 		}
 	}
