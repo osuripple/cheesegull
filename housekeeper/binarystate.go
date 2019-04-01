@@ -82,7 +82,7 @@ func readBeatmaps(r io.Reader) ([]*CachedBeatmap, error) {
 		return nil, err
 	}
 	if string(b) != "CGBIN001" {
-		return nil, errors.New("unknown cgbin version")
+		return nil, errors.New("cheesegull/housekeeper: unknown cgbin version")
 	}
 
 	b = make([]byte, 1)

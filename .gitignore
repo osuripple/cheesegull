@@ -1,3 +1,5 @@
 /cheesegull
 /data/*
 !/data/.gitkeep
+/.env
+/cgbin.db

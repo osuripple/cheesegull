@@ -12,6 +12,7 @@ import (
 	"net/http/cookiejar"
 	"net/url"
 	"strconv"
+	"strings"
 )
 
 // LogIn logs in into an osu! account and returns a Client.
@@ -35,7 +36,7 @@ func LogIn(username, password string) (*Client, error) {
 		return nil, err
 	}
 	if loginResp.Request.URL.Path != "/" {
-		return nil, errors.New("downloader: Login: could not log in (was not redirected to index)")
+		return nil, errors.New("cheesegull/downloader: could not log in (was not redirected to index)")
 	}
 	return (*Client)(c), nil
 }
@@ -73,7 +74,11 @@ func (c *Client) Download(setID int, noVideo bool) (io.ReadCloser, error) {
 
 // ErrNoRedirect is returned from Download when we were not redirect, thus
 // indicating that the beatmap is unavailable.
-var ErrNoRedirect = errors.New("no redirect happened, beatmap could not be downloaded")
+var ErrNoRedirect = errors.New("cheesegull/downloader: no redirect happened, beatmap could not be downloaded")
+
+var errNoZip = errors.New("cheesegull/downloader: file is not a zip archive")
+
+const zipMagic = "PK\x03\x04"
 
 func (c *Client) getReader(str string) (io.ReadCloser, error) {
 	h := (*http.Client)(c)
@@ -87,5 +92,21 @@ func (c *Client) getReader(str string) (io.ReadCloser, error) {
 		return nil, ErrNoRedirect
 	}
 
-	return resp.Body, nil
+	// check that it is a zip file
+	first4 := make([]byte, 4)
+	_, err = resp.Body.Read(first4)
+	if err != nil {
+		return nil, err
+	}
+	if string(first4) != zipMagic {
+		return nil, errNoZip
+	}
+
+	return struct {
+		io.Reader
+		io.Closer
+	}{
+		io.MultiReader(strings.NewReader(zipMagic), resp.Body),
+		resp.Body,
+	}, nil
 }

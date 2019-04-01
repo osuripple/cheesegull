@@ -30,13 +30,14 @@ const searchDSNDocs = `"DSN to use for fulltext searches. ` +
 	`behaviour and you should definetely bother to set it up (follow the README).`
 
 var (
-	osuAPIKey   = kingpin.Flag("api-key", "osu! API key").Short('k').Envar("OSU_API_KEY").String()
-	osuUsername = kingpin.Flag("osu-username", "osu! username (for downloading and fetching whether a beatmap has a video)").Short('u').Envar("OSU_USERNAME").String()
-	osuPassword = kingpin.Flag("osu-password", "osu! password (for downloading and fetching whether a beatmap has a video)").Short('p').Envar("OSU_PASSWORD").String()
-	mysqlDSN    = kingpin.Flag("mysql-dsn", "DSN of MySQL").Short('m').Default("root@/cheesegull").Envar("MYSQL_DSN").String()
-	searchDSN   = kingpin.Flag("search-dsn", searchDSNDocs).Default("root@tcp(127.0.0.1:9306)/cheesegull").Envar("SEARCH_DSN").String()
-	httpAddr    = kingpin.Flag("http-addr", "Address on which to take HTTP requests.").Short('a').Default("127.0.0.1:62011").String()
-	maxDisk     = kingpin.Flag("max-disk", "Maximum number of GB used by beatmap cache.").Default("10").Envar("MAXIMUM_DISK").Float64()
+	osuAPIKey    = kingpin.Flag("api-key", "osu! API key").Short('k').Envar("OSU_API_KEY").String()
+	osuUsername  = kingpin.Flag("osu-username", "osu! username (for downloading and fetching whether a beatmap has a video)").Short('u').Envar("OSU_USERNAME").String()
+	osuPassword  = kingpin.Flag("osu-password", "osu! password (for downloading and fetching whether a beatmap has a video)").Short('p').Envar("OSU_PASSWORD").String()
+	mysqlDSN     = kingpin.Flag("mysql-dsn", "DSN of MySQL").Short('m').Default("root@/cheesegull").Envar("MYSQL_DSN").String()
+	searchDSN    = kingpin.Flag("search-dsn", searchDSNDocs).Default("root@tcp(127.0.0.1:9306)/cheesegull").Envar("SEARCH_DSN").String()
+	httpAddr     = kingpin.Flag("http-addr", "Address on which to take HTTP requests.").Short('a').Default("127.0.0.1:62011").String()
+	maxDisk      = kingpin.Flag("max-disk", "Maximum number of GB used by beatmap cache.").Default("10").Envar("MAXIMUM_DISK").Float64()
+	removeNonZip = kingpin.Flag("remove-non-zip", "Remove non-zip files.").Default("false").Bool()
 )
 
 func addTimeParsing(dsn string) string {
@@ -53,6 +54,20 @@ func main() {
 
 	fmt.Println("CheeseGull", Version)
 	api.Version = Version
+
+	// set up housekeeper
+	house := housekeeper.New()
+	err := house.LoadState()
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	house.MaxSize = uint64(float64(1024*1024*1024) * (*maxDisk))
+	if *removeNonZip {
+		house.RemoveNonZip()
+		return
+	}
+	house.StartCleaner()
 
 	// set up osuapi client
 	c := osuapi.NewClient(*osuAPIKey)
@@ -78,16 +93,6 @@ func main() {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-
-	// set up housekeeper
-	house := housekeeper.New()
-	err = house.LoadState()
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
-	house.MaxSize = uint64(float64(1024*1024*1024) * (*maxDisk))
-	house.StartCleaner()
 
 	// run mysql migrations
 	err = models.RunMigrations(db)

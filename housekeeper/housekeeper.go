@@ -194,6 +194,63 @@ func (h *House) LoadState() error {
 	return err
 }
 
+const zipMagic = "PK\x03\x04"
+
+// RemoveNonZip reads all the beatmaps currently in the house to ensure that
+// they are all zip files. Those which are not get removed.
+func (h *House) RemoveNonZip() {
+	f, err := os.Create("cgbin.db")
+	if err != nil {
+		logError(err)
+		return
+	}
+
+	h.stateMutex.Lock()
+	state2 := make([]*CachedBeatmap, 0, len(h.state))
+	log.Println("[F] Removing non-zip files...", len(h.state), "beatmaps to read")
+	for _, beatmap := range h.state {
+		remove, err := checkBeatmap(beatmap)
+		if err != nil {
+			log.Println("[F] Error:", err)
+			continue
+		}
+		if remove {
+			err = os.Remove(beatmap.fileName())
+			if err != nil {
+				log.Println("[F] Error removing:", err)
+			} else {
+				log.Println("[F] Remove:", beatmap.ID, beatmap.NoVideo)
+			}
+		} else {
+			state2 = append(state2, beatmap)
+		}
+	}
+	err = writeBeatmaps(f, state2)
+	if err != nil {
+		logError(err)
+	}
+	h.state = state2
+	h.stateMutex.Unlock()
+	f.Close()
+	log.Println("[F] CleanUp")
+	h.cleanUp()
+}
+
+func checkBeatmap(b *CachedBeatmap) (bool, error) {
+	f, err := b.File()
+	if os.IsNotExist(err) {
+		return true, nil
+	}
+	if err != nil {
+		return false, err
+	}
+	defer f.Close()
+
+	header := make([]byte, 4)
+	_, err = f.Read(header)
+	return string(header) != zipMagic, err
+}
+
 var envSentryDSN = os.Getenv("SENTRY_DSN")
 
 // logError attempts to log an error to Sentry, as well as stdout.
