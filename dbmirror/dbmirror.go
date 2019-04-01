@@ -104,7 +104,9 @@ func updateSet(c *osuapi.Client, db *sql.DB, set models.Set) error {
 	// first beatmap's information
 	var x = bms[0]
 	updated := !time.Time(x.LastUpdate).Equal(set.LastUpdate)
+	oldHasVideo := set.HasVideo
 	set = setFromOsuAPIBeatmap(x)
+	set.HasVideo = oldHasVideo
 	set.ChildrenBeatmaps = createChildrenBeatmaps(bms)
 	if updated {
 		// if it has been updated, video might have been added or removed
