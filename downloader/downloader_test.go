@@ -36,31 +36,31 @@ func TestDownload(t *testing.T) {
 		t.Skip("c is nil")
 	}
 	{
-		vid, novid, err := c.Download(1)
+		vid, err := c.Download(1, false)
 		if err != nil {
 			t.Fatal(err)
-		}
-		if novid != nil {
-			t.Fatal("Returning a video when there's supposed to be no video")
 		}
 		md5Test(t, vid, "f40fae62893087e72672b3e6d1468a70")
 	}
 	{
-		vid, novid, err := c.Download(100517)
+		vid, err := c.Download(100517, false)
 		if err != nil {
 			t.Fatal(err)
 		}
-		if novid == nil {
-			t.Fatal("Returning no video when there's supposed to be one.")
-		}
 		md5Test(t, vid, "500b361f47ff99551dbb9931cdf39ace")
+	}
+	{
+		novid, err := c.Download(100517, true)
+		if err != nil {
+			t.Fatal(err)
+		}
 		md5Test(t, novid, "3de1e07850e2fe1f21333e4d5b01a350")
 	}
 }
 
 func cleanUp(files ...string) {
 	for _, f := range files {
-		os.Remove(f)
+		os.Remove(f)	
 	}
 }
 
