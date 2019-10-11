@@ -4,6 +4,7 @@ package downloader
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -16,11 +17,43 @@ import (
 )
 
 // LogIn logs in into an osu! account and returns a Client.
-func LogIn(username, password string) (*Client, error) {
+func LogIn(username, password, fckcfAddr string) (*Client, error) {
+	fckCfReqJson := []byte(`{"url":"https://old.ppy.sh/forum/ucp.php?mode=login"}`)
+	fckCfResp, err := http.Post(fckcfAddr, "application/json", bytes.NewBuffer(fckCfReqJson))
+	if err != nil {
+		return nil, err
+	}
+	fckCfBody, err := ioutil.ReadAll(fckCfResp.Body)
+	if err != nil {
+		return nil, err
+	}
+	var fckCfData map[string]interface{}
+	json.Unmarshal(fckCfBody, &fckCfData)
+	if err != nil {
+		return nil, err
+	}
+
 	j, err := cookiejar.New(&cookiejar.Options{})
 	if err != nil {
 		return nil, err
 	}
+	u, _ := url.Parse("https://osu.ppy.sh")
+	var cookies []*http.Cookie
+	cookie := &http.Cookie{
+		Name: "__cfduid",
+		Value: fckCfData["__cfduid"].(string),
+		Path: "/",
+		Domain: ".ppy.sh",
+	}
+	cookies = append(cookies, cookie)
+	cookie = &http.Cookie{
+		Name: "cf_clearance",
+			Value: fckCfData["cf_clearance"].(string),
+			Path: "/",
+			Domain: ".ppy.sh",
+	}
+	cookies = append(cookies, cookie)
+	j.SetCookies(u, cookies)
 	c := &http.Client{
 		Jar: j,
 	}
@@ -30,13 +63,28 @@ func LogIn(username, password string) (*Client, error) {
 	vals.Add("username", username)
 	vals.Add("password", password)
 	vals.Add("autologin", "on")
-	vals.Add("login", "login")
-	loginResp, err := c.PostForm("https://old.ppy.sh/forum/ucp.php?mode=login", vals)
+	vals.Add("login", "Login")
+	req, err := http.NewRequest("POST", "https://osu.ppy.sh/forum/ucp.php?mode=login", strings.NewReader(vals.Encode()))
 	if err != nil {
 		return nil, err
 	}
-	if loginResp.Request.URL.Path != "/" {
-		return nil, errors.New("cheesegull/downloader: could not log in (was not redirected to index)")
+	req.Header.Set("User-Agent", fckCfData["user_agent"].(string))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Set("Content-Length", strconv.Itoa(len(vals.Encode())))
+	// loginResp, err := client.PostForm("https://osu.ppy.sh/forum/ucp.php?mode=login", vals)
+	loginResp, err := c.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	/*defer loginResp.Body.Close()
+	body, err := ioutil.ReadAll(loginResp.Body)
+	if err != nil {
+		return nil, errors.New("cheesegull/downloader: could not read login response body")
+	}
+	fmt.Println(string(body))
+	fmt.Println(j.Cookies(u))*/
+	if loginResp.Request.URL.Path != "/home" {
+		return nil, errors.New("cheesegull/downloader: could not log in (was not redirected to /home) but to " + loginResp.Request.URL.Path)
 	}
 	return (*Client)(c), nil
 }
@@ -110,3 +158,4 @@ func (c *Client) getReader(str string) (io.ReadCloser, error) {
 		resp.Body,
 	}, nil
 }
+

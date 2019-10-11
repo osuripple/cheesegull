@@ -13,6 +13,7 @@ import (
 
 // House manages the state of the cached beatmaps in the local filesystem.
 type House struct {
+	FilePath    string
 	MaxSize     uint64
 	state       []*CachedBeatmap
 	stateMutex  sync.RWMutex
@@ -23,9 +24,10 @@ type House struct {
 }
 
 // New creates a new house, initialised with the default values.
-func New() *House {
+func New(cgdataPath string) *House {
 	return &House{
 		MaxSize:     1024 * 1024 * 1024 * 10, // 10 gigs
+		FilePath:    cgdataPath,
 		requestChan: make(chan struct{}, 1),
 	}
 }
@@ -57,7 +59,7 @@ func (h *House) cleanUp() {
 
 	toRemove := h.mapsToRemove()
 
-	f, err := os.Create("cgbin.db")
+	f, err := os.Create(h.FilePath)
 	if err != nil {
 		logError(err)
 		return
@@ -179,7 +181,7 @@ func sortByLastRequested(b []*CachedBeatmap) {
 
 // LoadState attempts to load the state from cgbin.db
 func (h *House) LoadState() error {
-	f, err := os.Open("cgbin.db")
+	f, err := os.Open(h.FilePath)
 	switch {
 	case os.IsNotExist(err):
 		return nil
@@ -200,7 +202,7 @@ const zipMagic = "PK\x03\x04"
 // RemoveNonZip reads all the beatmaps currently in the house to ensure that
 // they are all zip files. Those which are not get removed.
 func (h *House) RemoveNonZip() {
-	f, err := os.Create("cgbin.db")
+	f, err := os.Create(h.FilePath)
 	if err != nil {
 		logError(err)
 		return

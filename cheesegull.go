@@ -35,9 +35,11 @@ var (
 	osuPassword  = kingpin.Flag("osu-password", "osu! password (for downloading and fetching whether a beatmap has a video)").Short('p').Envar("OSU_PASSWORD").String()
 	mysqlDSN     = kingpin.Flag("mysql-dsn", "DSN of MySQL").Short('m').Default("root@/cheesegull").Envar("MYSQL_DSN").String()
 	searchDSN    = kingpin.Flag("search-dsn", searchDSNDocs).Default("root@tcp(127.0.0.1:9306)/cheesegull").Envar("SEARCH_DSN").String()
-	httpAddr     = kingpin.Flag("http-addr", "Address on which to take HTTP requests.").Short('a').Default("127.0.0.1:62011").String()
+	httpAddr     = kingpin.Flag("http-addr", "Address on which to take HTTP requests.").Short('a').Default("127.0.0.1:62011").Envar("HTTP_ADDR").String()
 	maxDisk      = kingpin.Flag("max-disk", "Maximum number of GB used by beatmap cache.").Default("10").Envar("MAXIMUM_DISK").Float64()
 	removeNonZip = kingpin.Flag("remove-non-zip", "Remove non-zip files.").Default("false").Bool()
+	fckcfAddr    = kingpin.Flag("fckcf-addr", "fckcf http address").Default("http://127.0.0.1:45318").Envar("FCKCF_ADDR").String()
+	cgbinPath    = kingpin.Flag("cgbin-path", "cgbin.db file path").Default("cgbin.db").Envar("CGBIN_PATH").String()
 )
 
 func addTimeParsing(dsn string) string {
@@ -56,7 +58,7 @@ func main() {
 	api.Version = Version
 
 	// set up housekeeper
-	house := housekeeper.New()
+	house := housekeeper.New(*cgbinPath)
 	err := house.LoadState()
 	if err != nil {
 		fmt.Println(err)
@@ -73,7 +75,7 @@ func main() {
 	c := osuapi.NewClient(*osuAPIKey)
 
 	// set up downloader
-	d, err := downloader.LogIn(*osuUsername, *osuPassword)
+	d, err := downloader.LogIn(*osuUsername, *osuPassword, *fckcfAddr)
 	if err != nil {
 		fmt.Println("Can't log in into osu!:", err)
 		os.Exit(1)
