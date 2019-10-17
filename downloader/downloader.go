@@ -71,6 +71,17 @@ func LogIn(username, password, fckcfAddr string) (*Client, error) {
 	req.Header.Set("User-Agent", fckCfData["user_agent"].(string))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req.Header.Set("Content-Length", strconv.Itoa(len(vals.Encode())))
+	req.Header.Set("accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3")
+    req.Header.Set("accept-encoding", "gzip, deflate, br")
+    req.Header.Set("accept-language", "it-IT,it;q=0.9,en-US;q=0.8,en;q=0.7")
+    req.Header.Set("cache-control", "max-age=0")
+    req.Header.Set("origin", "https://osu.ppy.sh")
+    req.Header.Set("referer", "https://osu.ppy.sh/forum/ucp.php?mode=login")
+    req.Header.Set("sec-fetch-mode", "navigate")
+    req.Header.Set("sec-fetch-site", "same-origin")
+    req.Header.Set("sec-fetch-user", "?1")
+    req.Header.Set("upgrade-insecure-requests", "1")
+
 	// loginResp, err := client.PostForm("https://osu.ppy.sh/forum/ucp.php?mode=login", vals)
 	loginResp, err := c.Do(req)
 	if err != nil {
