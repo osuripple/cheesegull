@@ -134,6 +134,12 @@ func (h *House) AcquireBeatmap(c *CachedBeatmap) (*CachedBeatmap, bool) {
 		// if c is not newer than b, then just return.
 		if !b.LastUpdate.Before(c.LastUpdate) {
 			b.mtx.Unlock()
+			if b.FileSize() == 0 {
+				// Try re-downloading beatmaps if their size is 0
+				b.waitGroup.Add(1)
+				return b, true
+			}
+			// If size is ok, do not redownload
 			return b, false
 		}
 
