@@ -4,4 +4,4 @@
 package main
 
 // Version is the version of cheesegull.
-const Version = "v2.1.1"
+const Version = "v2.1.2"
