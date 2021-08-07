@@ -16,47 +16,109 @@ import (
 	"strings"
 )
 
-// LogIn logs in into an osu! account and returns a Client.
-func LogIn(username, password, fckcfAddr string) (*Client, error) {
-	fckCfReqJson := []byte(`{"url":"https://old.ppy.sh/forum/ucp.php?mode=login"}`)
-	fckCfResp, err := http.Post(fckcfAddr, "application/json", bytes.NewBuffer(fckCfReqJson))
-	if err != nil {
-		return nil, err
-	}
-	fckCfBody, err := ioutil.ReadAll(fckCfResp.Body)
-	if err != nil {
-		return nil, err
-	}
-	var fckCfData map[string]interface{}
-	json.Unmarshal(fckCfBody, &fckCfData)
-	if err != nil {
-		return nil, err
-	}
+// LogInRequestPreparer prepares cookies to set before
+// doing any osu! website http request (log-in)
+type LogInRequestPreparer interface {
+	PrepareCookies() (http.CookieJar, error)
+	PrepareHeaders() (map[string]string, error)
+}
 
+// EmptyLogInRequestPreparer is a cookie preparer that returns
+// an empty CookieJar
+type EmptyLogInRequestPreparer struct{}
+
+// PrepareCookies returns an empty cookie jar
+func (*EmptyLogInRequestPreparer) PrepareCookies() (http.CookieJar, error) {
 	j, err := cookiejar.New(&cookiejar.Options{})
 	if err != nil {
 		return nil, err
 	}
-	u, _ := url.Parse("https://osu.ppy.sh")
-	var cookies []*http.Cookie
-	cookie := &http.Cookie{
-		Name: "__cfduid",
-		Value: fckCfData["__cfduid"].(string),
-		Path: "/",
+	return j, nil
+}
+
+// PrepareHeaders returns an empty map (i.e.: no additional headers)
+func (*EmptyLogInRequestPreparer) PrepareHeaders() (map[string]string, error) {
+	return map[string]string{}, nil
+}
+
+// FckCf is a LogInRequestPreparer that prepares cookies using FckCf
+type FckCf struct {
+	Address string
+
+	proxyResp map[string]interface{}
+}
+
+// InitializeProxyResponse initializes the
+func (c *FckCf) InitializeProxyResponse() error {
+	buf := bytes.NewBuffer([]byte(`{"url":"https://old.ppy.sh/forum/ucp.php?mode=login"}`))
+	fckCfResp, err := http.Post(c.Address, "application/json", buf)
+	if err != nil {
+		return fmt.Errorf("proxy request: %w", err)
+	}
+	if err := json.NewDecoder(fckCfResp.Body).Decode(&c.proxyResp); err != nil {
+		return fmt.Errorf("json decode: %w", err)
+	}
+	return nil
+}
+
+func ppyCookie(name, value string) *http.Cookie {
+	return &http.Cookie{
+		Name:   name,
+		Value:  value,
+		Path:   "/",
 		Domain: ".ppy.sh",
 	}
-	cookies = append(cookies, cookie)
-	cookie = &http.Cookie{
-		Name: "cf_clearance",
-			Value: fckCfData["cf_clearance"].(string),
-			Path: "/",
-			Domain: ".ppy.sh",
+}
+
+// PrepareCookies calls FckCf and returns a CookieJar
+// with the required cookies
+func (c *FckCf) PrepareCookies() (http.CookieJar, error) {
+	if c.proxyResp == nil {
+		// Initialize proxy response only once
+		if err := c.InitializeProxyResponse(); err != nil {
+			return nil, fmt.Errorf("init proxy response: %w", err)
+		}
 	}
-	cookies = append(cookies, cookie)
-	j.SetCookies(u, cookies)
+	j, err := cookiejar.New(&cookiejar.Options{})
+	if err != nil {
+		return nil, err
+	}
+	u, err := url.Parse("https://osu.ppy.sh")
+	if err != nil {
+		return nil, err
+	}
+	j.SetCookies(u, []*http.Cookie{
+		ppyCookie("__cfduid", c.proxyResp["__cfduid"].(string)),
+		ppyCookie("cf_clearance", c.proxyResp["cf_clearance"].(string)),
+	})
+	return j, nil
+}
+
+func (c *FckCf) PrepareHeaders() (map[string]string, error) {
+	if c.proxyResp == nil {
+		return nil, errors.New("must first call PrepareCookies to set the fckcf resp")
+	}
+	return map[string]string{"User-Agent": c.proxyResp["user_agent"].(string)}, nil
+}
+
+// LogIn logs in into an osu! account and returns a Client.
+func LogIn(username string, password string, requestPreparer LogInRequestPreparer) (*Client, error) {
+	// Prepare cookies
+	cookieJar, err := requestPreparer.PrepareCookies()
+	if err != nil {
+		return nil, fmt.Errorf("prepare cookies: %w", err)
+	}
 	c := &http.Client{
-		Jar: j,
+		Jar: cookieJar,
 	}
+
+	// Prepare headers
+	preparedHeaders, err := requestPreparer.PrepareHeaders()
+	if err != nil {
+		return nil, fmt.Errorf("prepare headers: %w", err)
+	}
+
+	// POST form values
 	vals := url.Values{}
 	vals.Add("redirect", "/")
 	vals.Add("sid", "")
@@ -68,32 +130,30 @@ func LogIn(username, password, fckcfAddr string) (*Client, error) {
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Set("User-Agent", fckCfData["user_agent"].(string))
+	// Add headers from requestPreparer
+	for k, v := range preparedHeaders {
+		req.Header.Set(k, v)
+	}
+
+	// Other headers
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req.Header.Set("Content-Length", strconv.Itoa(len(vals.Encode())))
 	req.Header.Set("accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3")
-    req.Header.Set("accept-encoding", "gzip, deflate, br")
-    req.Header.Set("accept-language", "it-IT,it;q=0.9,en-US;q=0.8,en;q=0.7")
-    req.Header.Set("cache-control", "max-age=0")
-    req.Header.Set("origin", "https://osu.ppy.sh")
-    req.Header.Set("referer", "https://osu.ppy.sh/forum/ucp.php?mode=login")
-    req.Header.Set("sec-fetch-mode", "navigate")
-    req.Header.Set("sec-fetch-site", "same-origin")
-    req.Header.Set("sec-fetch-user", "?1")
-    req.Header.Set("upgrade-insecure-requests", "1")
+	req.Header.Set("accept-encoding", "gzip, deflate, br")
+	req.Header.Set("accept-language", "it-IT,it;q=0.9,en-US;q=0.8,en;q=0.7")
+	req.Header.Set("cache-control", "max-age=0")
+	req.Header.Set("origin", "https://osu.ppy.sh")
+	req.Header.Set("referer", "https://osu.ppy.sh/forum/ucp.php?mode=login")
+	req.Header.Set("sec-fetch-mode", "navigate")
+	req.Header.Set("sec-fetch-site", "same-origin")
+	req.Header.Set("sec-fetch-user", "?1")
+	req.Header.Set("upgrade-insecure-requests", "1")
 
-	// loginResp, err := client.PostForm("https://osu.ppy.sh/forum/ucp.php?mode=login", vals)
+	// Do the request
 	loginResp, err := c.Do(req)
 	if err != nil {
 		return nil, err
 	}
-	/*defer loginResp.Body.Close()
-	body, err := ioutil.ReadAll(loginResp.Body)
-	if err != nil {
-		return nil, errors.New("cheesegull/downloader: could not read login response body")
-	}
-	fmt.Println(string(body))
-	fmt.Println(j.Cookies(u))*/
 	if loginResp.Request.URL.Path != "/home" {
 		return nil, errors.New("cheesegull/downloader: could not log in (was not redirected to /home) but to " + loginResp.Request.URL.Path)
 	}
@@ -169,4 +229,3 @@ func (c *Client) getReader(str string) (io.ReadCloser, error) {
 		resp.Body,
 	}, nil
 }
-
