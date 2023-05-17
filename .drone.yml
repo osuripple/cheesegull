@@ -12,7 +12,6 @@ steps:
       GIT_PASSWORD:
         from_secret: git_password
     commands:
-      - mkdir -p /cache/${DRONE_REPO}/docker
       - git clone https://$GIT_USERNAME:$GIT_PASSWORD@zxq.co/ripple/dockerfiles /dockerfiles
       - grep "const Version" doc.go | cut -d'"' -f 2 | cut -c 2- | tr -d '\n' > .tags
       - cp /dockerfiles/dockerfiles/cheesegull.Dockerfile Dockerfile
@@ -30,12 +29,8 @@ steps:
         from_secret: docker_password
       registry: d.nyodev.xyz
       repo: d.nyodev.xyz/ripple/cheesegull
-      use_cache: true
-      purge: false
     secrets: [docker_username, docker_password]
     volumes:
-      - name: docker
-        path: /var/lib/docker
       - name: docker_sock
         path: /var/run/docker.sock
     when:
@@ -61,12 +56,6 @@ image_pull_secrets:
   - docker_registry_credentials
 
 volumes:
-  - name: cache
-    host:
-      path: /var/cache
-  - name: docker
-    host:
-      path: /var/cache/${DRONE_REPO}/docker
   - name: docker_sock
     host:
       path: /var/run/docker.sock
