@@ -4,9 +4,11 @@ import (
 	"crypto/md5"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 var c *Client
@@ -17,21 +19,29 @@ var (
 )
 
 func TestLogIn(t *testing.T) {
-	var err error
-	c, err = LogIn(username, password)
-	if err != nil {
-		t.Fatal(err)
+	if testing.Short() {
+		t.Skip()
 	}
+
+	var err error
+	c, err = LogIn(username, password, &EmptyLogInRequestPreparer{})
+	assert.NoError(t, err)
 }
 
 func TestLogInWrongDetails(t *testing.T) {
-	_, err := LogIn("a", "i")
-	if err == nil {
-		t.Fatal("Unexpected non-error when trying to log in with user 'a' and password 'i'")
+	if testing.Short() {
+		t.Skip()
 	}
+
+	_, err := LogIn("a", "i", &EmptyLogInRequestPreparer{})
+	assert.NoError(t, err)
 }
 
 func TestDownload(t *testing.T) {
+	if testing.Short() {
+		t.Skip()
+	}
+
 	if c == nil {
 		t.Skip("c is nil")
 	}
@@ -58,19 +68,9 @@ func TestDownload(t *testing.T) {
 	}
 }
 
-func cleanUp(files ...string) {
-	for _, f := range files {
-		os.Remove(f)	
-	}
-}
-
 func md5Test(t *testing.T, f io.Reader, expect string) {
-	data, err := ioutil.ReadAll(f)
-	if err != nil {
-		t.Fatal(err)
-	}
+	data, err := io.ReadAll(f)
+	require.NoError(t, err)
 	sum := fmt.Sprintf("%x", md5.Sum(data))
-	if sum != expect {
-		t.Fatal("expecting md5 sum to be", expect, "got", sum)
-	}
+	require.Equal(t, expect, sum)
 }
