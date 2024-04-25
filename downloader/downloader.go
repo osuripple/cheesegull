@@ -8,7 +8,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/http/cookiejar"
 	"net/url"
@@ -173,7 +172,7 @@ func (c *Client) HasVideo(setID int) (bool, error) {
 		return false, err
 	}
 	defer page.Body.Close()
-	body, err := ioutil.ReadAll(page.Body)
+	body, err := io.ReadAll(page.Body)
 	if err != nil {
 		return false, err
 	}
