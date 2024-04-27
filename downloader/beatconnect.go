@@ -9,6 +9,7 @@ import (
 
 const BeatConnectAPIBase = "https://beatconnect.io"
 
+// BeatConnectClient is a client for the BeatConnect API.
 type BeatConnectClient struct {
 	httpClient *http.Client
 	apiToken   string
