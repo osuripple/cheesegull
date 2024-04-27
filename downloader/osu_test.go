@@ -11,8 +11,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var c *Client
-
 var (
 	username = os.Getenv("OSU_USERNAME")
 	password = os.Getenv("OSU_PASSWORD")
@@ -24,7 +22,7 @@ func TestLogIn(t *testing.T) {
 	}
 
 	var err error
-	c, err = LogIn(username, password, &EmptyLogInRequestPreparer{})
+	_, err = NewOsuClient(username, password, &EmptyLogInRequestPreparer{})
 	assert.NoError(t, err)
 }
 
@@ -33,7 +31,7 @@ func TestLogInWrongDetails(t *testing.T) {
 		t.Skip()
 	}
 
-	_, err := LogIn("a", "i", &EmptyLogInRequestPreparer{})
+	_, err := NewOsuClient("a", "i", &EmptyLogInRequestPreparer{})
 	assert.NoError(t, err)
 }
 
@@ -42,9 +40,9 @@ func TestDownload(t *testing.T) {
 		t.Skip()
 	}
 
-	if c == nil {
-		t.Skip("c is nil")
-	}
+	c, err := NewOsuClient(username, password, &EmptyLogInRequestPreparer{})
+	require.NoError(t, err)
+
 	{
 		vid, err := c.Download(1, false)
 		if err != nil {

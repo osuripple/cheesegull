@@ -26,9 +26,10 @@ type Context struct {
 	DB       *sql.DB
 	SearchDB *sql.DB
 	House    *housekeeper.House
-	DLClient *downloader.Client
+	DLClient downloader.Client
 	writer   http.ResponseWriter
 	params   httprouter.Params
+	Options  Options
 }
 
 // Write writes content to the response body.
@@ -93,9 +94,13 @@ func POST(path string, f func(c *Context)) {
 	handlers = append(handlers, handlerPath{"POST", path, f})
 }
 
+type Options struct {
+	AllowUnranked bool
+}
+
 // CreateHandler creates a new http.Handler using the handlers registered
 // through GET and POST.
-func CreateHandler(db, searchDB *sql.DB, house *housekeeper.House, dlc *downloader.Client) http.Handler {
+func CreateHandler(db, searchDB *sql.DB, house *housekeeper.House, dlc downloader.Client, options Options) http.Handler {
 	r := httprouter.New()
 	for _, h := range handlers {
 		// Create local copy that we know won't change as the loop proceeds.
@@ -110,6 +115,7 @@ func CreateHandler(db, searchDB *sql.DB, house *housekeeper.House, dlc *download
 				DLClient: dlc,
 				writer:   w,
 				params:   p,
+				Options:  options,
 			}
 			defer func() {
 				err := recover()

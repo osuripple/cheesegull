@@ -30,9 +30,15 @@ const searchDSNDocs = `"DSN to use for fulltext searches. ` +
 	`behaviour and you should definetely bother to set it up (follow the README).`
 
 var (
-	osuAPIKey    = kingpin.Flag("api-key", "osu! API key").Short('k').Envar("OSU_API_KEY").String()
-	osuUsername  = kingpin.Flag("osu-username", "osu! username (for downloading and fetching whether a beatmap has a video)").Short('u').Envar("OSU_USERNAME").String()
-	osuPassword  = kingpin.Flag("osu-password", "osu! password (for downloading and fetching whether a beatmap has a video)").Short('p').Envar("OSU_PASSWORD").String()
+	osuAPIKey = kingpin.Flag("api-key", "osu! API key").Short('k').Envar("OSU_API_KEY").String()
+
+	osuUsername = kingpin.Flag("osu-username", "osu! username (for downloading and fetching whether a beatmap has a video)").Short('u').Envar("OSU_USERNAME").String()
+	osuPassword = kingpin.Flag("osu-password", "osu! password (for downloading and fetching whether a beatmap has a video)").Short('p').Envar("OSU_PASSWORD").String()
+
+	beatconnectToken = kingpin.Flag("beatconnect-token", "beatconnect token. if provided, will use beatconnect rather than osu! website for downloading beatmaps").Envar("BEATCONNECT_TOKEN").String()
+
+	allowUnranked = kingpin.Flag("allow-unranked", "Allow unranked beatmaps to be downloaded").Envar("ALLOW_UNRANKED").Default("false").Bool()
+
 	mysqlDSN     = kingpin.Flag("mysql-dsn", "DSN of MySQL").Short('m').Default("root@/cheesegull").Envar("MYSQL_DSN").String()
 	searchDSN    = kingpin.Flag("search-dsn", searchDSNDocs).Default("root@tcp(127.0.0.1:9306)/cheesegull").Envar("SEARCH_DSN").String()
 	httpAddr     = kingpin.Flag("http-addr", "Address on which to take HTTP requests.").Short('a').Default("127.0.0.1:62011").Envar("HTTP_ADDR").String()
@@ -75,20 +81,30 @@ func main() {
 	c := osuapi.NewClient(*osuAPIKey)
 
 	// set up downloader
-	var reqPreparer downloader.LogInRequestPreparer
-	if *fckcfAddr == "" {
-		// No fckck address provided, disable it.
-		reqPreparer = &downloader.EmptyLogInRequestPreparer{}
+	var downloaderClient downloader.Client
+	if *beatconnectToken != "" {
+		fmt.Println("Using beatconnect")
+		downloaderClient = downloader.NewBeatConnectClient(*beatconnectToken)
 	} else {
-		// Fckcf address provided, use it as a proxy
-		reqPreparer = &downloader.FckCf{Address: *fckcfAddr}
+		fmt.Println("Using osu! website")
+
+		var reqPreparer downloader.LogInRequestPreparer
+		if *fckcfAddr == "" {
+			// No fckck address provided, disable it.
+			reqPreparer = &downloader.EmptyLogInRequestPreparer{}
+		} else {
+			// Fckcf address provided, use it as a proxy
+			reqPreparer = &downloader.FckCf{Address: *fckcfAddr}
+		}
+
+		downloaderClient, err = downloader.NewOsuClient(*osuUsername, *osuPassword, reqPreparer)
+		if err != nil {
+			fmt.Println("Can't log in into osu!:", err)
+			os.Exit(1)
+		}
 	}
-	d, err := downloader.LogIn(*osuUsername, *osuPassword, reqPreparer)
-	if err != nil {
-		fmt.Println("Can't log in into osu!:", err)
-		os.Exit(1)
-	}
-	dbmirror.SetHasVideo(d.HasVideo)
+
+	d := downloader.NewDownloader(downloaderClient)
 
 	// set up mysql
 	db, err := sql.Open("mysql", addTimeParsing(*mysqlDSN))
@@ -115,5 +131,7 @@ func main() {
 	go dbmirror.DiscoverEvery(c, db, time.Hour*6, time.Second*20)
 
 	// create request handler
-	panic(http.ListenAndServe(*httpAddr, api.CreateHandler(db, db2, house, d)))
+	panic(http.ListenAndServe(*httpAddr, api.CreateHandler(db, db2, house, d, api.Options{
+		AllowUnranked: *allowUnranked,
+	})))
 }

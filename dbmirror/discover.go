@@ -51,10 +51,7 @@ func Discover(c *osuapi.Client, db *sql.DB) error {
 
 		set := setFromOsuAPIBeatmap(bms[0])
 		set.ChildrenBeatmaps = createChildrenBeatmaps(bms)
-		set.HasVideo, err = hasVideo(bms[0].BeatmapSetID)
-		if err != nil {
-			return err
-		}
+		set.HasVideo = bool(bms[0].Video)
 
 		err = models.CreateSet(db, set)
 		if err != nil {
