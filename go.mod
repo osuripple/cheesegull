@@ -8,7 +8,7 @@ require (
 	github.com/go-sql-driver/mysql v1.3.0
 	github.com/julienschmidt/httprouter v1.1.0
 	github.com/stretchr/testify v1.9.0
-	github.com/thehowl/go-osuapi v0.0.0-20171004075559-b918f5da7258
+	github.com/thehowl/go-osuapi v0.0.0-20240427225351-d8fb25d1e94f
 )
 
 require (
