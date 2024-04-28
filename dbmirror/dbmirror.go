@@ -25,17 +25,6 @@ const (
 	SetUpdaterWorkers = PerBatch / 20
 )
 
-// hasVideo checks whether a beatmap set has a video.
-var hasVideo func(set int) (bool, error)
-
-// SetHasVideo sets the hasVideo function to the one passed.
-func SetHasVideo(f func(int) (bool, error)) {
-	if f == nil {
-		return
-	}
-	hasVideo = f
-}
-
 func createChildrenBeatmaps(bms []osuapi.Beatmap) []models.Beatmap {
 	cgBms := make([]models.Beatmap, len(bms))
 	for idx, bm := range bms {
@@ -111,10 +100,7 @@ func updateSet(c *osuapi.Client, db *sql.DB, set models.Set) error {
 	if updated {
 		// if it has been updated, video might have been added or removed
 		// so we need to check for it
-		set.HasVideo, err = hasVideo(x.BeatmapSetID)
-		if err != nil {
-			return err
-		}
+		set.HasVideo = bool(x.Video)
 	}
 
 	return models.CreateSet(db, set)

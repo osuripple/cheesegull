@@ -1,3 +1,4 @@
+//go:build ignore
 // +build ignore
 
 package main
@@ -5,7 +6,6 @@ package main
 import (
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"strings"
 )
@@ -22,7 +22,7 @@ func main() {
 	// ReadDir gets all the files in the directory and then sorts them
 	// alphabetically - thus we can be sure 0000 will come first and 0001 will
 	// come afterwards.
-	files, err := ioutil.ReadDir("migrations")
+	files, err := os.ReadDir("migrations")
 	check(err)
 
 	out, err := os.Create("migrations.go")

@@ -1,43 +1,66 @@
 package housekeeper
 
 import (
-	"reflect"
+	"os"
+	"path/filepath"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/require"
 )
 
-func TestCleanupOneMap(t *testing.T) {
+type testFile struct {
+	path string
+}
+
+func newTestFolder(t *testing.T) testFile {
+	return testFile{
+		path: filepath.Join(t.TempDir(), "cgbin.db"),
+	}
+}
+
+func (f testFile) cleanup(t *testing.T) func() {
+	return func() {
+		err := os.Remove(f.path)
+		require.NoError(t, err)
+	}
+}
+
+func TestCleanup(t *testing.T) {
 	expectRemove := []*CachedBeatmap{
-		&CachedBeatmap{
+		{
 			ID:            1,
 			lastRequested: time.Date(2017, 4, 5, 15, 5, 3, 0, time.UTC),
-			fileSize:      15,
+			fileSize:      15000,
 			isDownloaded:  true,
 		},
 	}
 	expectRemain := []*CachedBeatmap{
-		&CachedBeatmap{
+		{
 			ID:            2,
 			lastRequested: time.Date(2017, 4, 10, 15, 5, 3, 0, time.UTC),
-			fileSize:      15,
+			fileSize:      15000,
 			isDownloaded:  true,
 		},
-		&CachedBeatmap{
+		{
 			ID:            3,
 			lastRequested: time.Date(2017, 4, 15, 15, 5, 3, 0, time.UTC),
-			fileSize:      15,
+			fileSize:      15000,
 			isDownloaded:  true,
 		},
-		&CachedBeatmap{
+		{
 			ID:            4,
 			lastRequested: time.Date(2017, 4, 20, 15, 5, 3, 0, time.UTC),
-			fileSize:      15,
+			fileSize:      15000,
 			isDownloaded:  true,
 		},
 	}
 
-	h := New()
-	h.MaxSize = 50
+	f := newTestFolder(t)
+	t.Cleanup(f.cleanup(t))
+
+	h := New(f.path)
+	h.MaxSize = 50000
 	h.state = append(expectRemain, expectRemove...)
 	h.dryRun = make([]*CachedBeatmap, 0)
 
@@ -45,27 +68,26 @@ func TestCleanupOneMap(t *testing.T) {
 	h.cleanUp()
 	t.Log("cleanup took", time.Since(start))
 
-	if !reflect.DeepEqual(expectRemain, h.state) {
-		t.Errorf("Want %v got %v", expectRemain, h.state)
-	}
-	if !reflect.DeepEqual(expectRemove, h.dryRun) {
-		t.Errorf("Want %v got %v", expectRemove, h.dryRun)
-	}
+	require.Equal(t, expectRemain, h.state)
+	require.Equal(t, expectRemove, h.dryRun)
 }
 
 func TestCleanupNoMaps(t *testing.T) {
 	expectRemove := []*CachedBeatmap{}
 	expectRemain := []*CachedBeatmap{
-		&CachedBeatmap{
+		{
 			ID:            1,
 			lastRequested: time.Date(2017, 4, 10, 15, 5, 3, 0, time.UTC),
-			fileSize:      10,
+			fileSize:      100000,
 			isDownloaded:  true,
 		},
 	}
 
-	h := New()
-	h.MaxSize = 10
+	f := newTestFolder(t)
+	t.Cleanup(f.cleanup(t))
+
+	h := New(f.path)
+	h.MaxSize = 100000
 	h.state = append(expectRemain, expectRemove...)
 	h.dryRun = make([]*CachedBeatmap, 0)
 
@@ -73,17 +95,13 @@ func TestCleanupNoMaps(t *testing.T) {
 	h.cleanUp()
 	t.Log("cleanup took", time.Since(start))
 
-	if !reflect.DeepEqual(expectRemain, h.state) {
-		t.Errorf("Want %v got %v", expectRemain, h.state)
-	}
-	if !reflect.DeepEqual(expectRemove, h.dryRun) {
-		t.Errorf("Want %v got %v", expectRemove, h.dryRun)
-	}
+	require.Equal(t, expectRemain, h.state)
+	require.Empty(t, h.dryRun)
 }
 
 func TestCleanupEmptyBeatmaps(t *testing.T) {
 	expectRemove := []*CachedBeatmap{
-		&CachedBeatmap{
+		{
 			ID:            1,
 			lastRequested: time.Date(2017, 4, 10, 15, 5, 3, 0, time.UTC),
 			fileSize:      10,
@@ -91,19 +109,19 @@ func TestCleanupEmptyBeatmaps(t *testing.T) {
 		},
 	}
 	expectRemain := []*CachedBeatmap{
-		&CachedBeatmap{
+		{
 			ID:            2,
 			lastRequested: time.Date(2017, 4, 5, 15, 5, 3, 0, time.UTC),
 			fileSize:      0,
 			isDownloaded:  true,
 		},
-		&CachedBeatmap{
+		{
 			ID:            3,
 			lastRequested: time.Date(2017, 4, 4, 15, 5, 3, 0, time.UTC),
 			fileSize:      0,
 			isDownloaded:  true,
 		},
-		&CachedBeatmap{
+		{
 			ID:            4,
 			lastRequested: time.Date(2017, 4, 3, 15, 5, 3, 0, time.UTC),
 			fileSize:      0,
@@ -111,7 +129,10 @@ func TestCleanupEmptyBeatmaps(t *testing.T) {
 		},
 	}
 
-	h := New()
+	f := newTestFolder(t)
+	t.Cleanup(f.cleanup(t))
+
+	h := New(f.path)
 	h.MaxSize = 5
 	h.state = append(expectRemain, expectRemove...)
 	h.dryRun = make([]*CachedBeatmap, 0)
@@ -120,10 +141,6 @@ func TestCleanupEmptyBeatmaps(t *testing.T) {
 	h.cleanUp()
 	t.Log("cleanup took", time.Since(start))
 
-	if !reflect.DeepEqual(expectRemain, h.state) {
-		t.Errorf("Want %v got %v", expectRemain, h.state)
-	}
-	if !reflect.DeepEqual(expectRemove, h.dryRun) {
-		t.Errorf("Want %v got %v", expectRemove, h.dryRun)
-	}
+	require.Equal(t, expectRemain, h.state)
+	require.Equal(t, expectRemove, h.dryRun)
 }

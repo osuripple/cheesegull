@@ -38,7 +38,9 @@ func RunMigrations(db *sql.DB) error {
 		version++
 		if version >= len(migrations) {
 			version--
-			db.Exec("UPDATE db_version SET version = ?", version)
+			if _, err := db.Exec("UPDATE db_version SET version = ?", version); err != nil {
+				return err
+			}
 			return nil
 		}
 

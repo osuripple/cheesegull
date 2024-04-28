@@ -2,26 +2,27 @@ package housekeeper
 
 import (
 	"bytes"
-	"reflect"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/require"
 )
 
 var testBeatmaps = []*CachedBeatmap{
-	&CachedBeatmap{
+	{
 		isDownloaded: true,
 	},
-	&CachedBeatmap{
+	{
 		ID:           851,
 		NoVideo:      true,
 		isDownloaded: true,
 	},
-	&CachedBeatmap{
+	{
 		ID:           1337777,
 		fileSize:     58111,
 		isDownloaded: true,
 	},
-	&CachedBeatmap{
+	{
 		ID:            851,
 		LastUpdate:    time.Date(2017, 9, 21, 11, 11, 50, 0, time.UTC),
 		lastRequested: time.Date(2017, 9, 21, 22, 11, 50, 0, time.UTC),
@@ -34,26 +35,23 @@ func TestEncodeDecode(t *testing.T) {
 
 	start := time.Now()
 	err := writeBeatmaps(buf, testBeatmaps)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
+
 	t.Logf("Write took %v", time.Since(start))
 
 	start = time.Now()
 	readBMs, err := readBeatmaps(buf)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	t.Logf("Read took %v", time.Since(start))
 
-	if !reflect.DeepEqual(readBMs, testBeatmaps) {
-		t.Fatalf("original %v read %v", testBeatmaps, readBMs)
-	}
+	require.Equal(t, readBMs, testBeatmaps)
 }
 
 func BenchmarkWriteBinaryState(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		writeBeatmaps(fakeWriter{}, testBeatmaps)
+		if err := writeBeatmaps(fakeWriter{}, testBeatmaps); err != nil {
+			panic(err)
+		}
 	}
 }
 
@@ -67,7 +65,9 @@ func BenchmarkReadBinaryState(b *testing.B) {
 	bReader := bytes.NewReader(bufBytes)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		readBeatmaps(bReader)
+		if _, err := readBeatmaps(bReader); err != nil {
+			panic(err)
+		}
 		bReader.Reset(bufBytes)
 	}
 }

@@ -45,7 +45,7 @@ func Download(c *api.Context) {
 		errorMessage(c, 404, "Set not found")
 		return
 	}
-	if set.RankedStatus <= 0 {
+	if set.RankedStatus <= 0 && !c.Options.AllowUnranked {
 		errorMessage(c, 406, "Unranked beatmap sets are currently not available for download, following a warning")
 		return
 	}
@@ -97,7 +97,7 @@ func Download(c *api.Context) {
 	}
 }
 
-func downloadBeatmap(c *downloader.Client, b *housekeeper.CachedBeatmap, house *housekeeper.House) error {
+func downloadBeatmap(c downloader.Client, b *housekeeper.CachedBeatmap, house *housekeeper.House) error {
 	log.Println("[⬇️]", b.String())
 
 	var fileSize uint64
