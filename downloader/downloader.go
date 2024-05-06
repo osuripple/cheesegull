@@ -2,8 +2,12 @@ package downloader
 
 import (
 	"errors"
+	"fmt"
 	"io"
+	"log"
+	"math"
 	"strings"
+	"time"
 )
 
 var (
@@ -13,9 +17,16 @@ var (
 	// ErrNoRedirect is returned from Download when we were not redirect, thus
 	// indicating that the beatmap is unavailable.
 	ErrNoRedirect = errors.New("cheesegull/downloader: no redirect happened, beatmap could not be downloaded")
+
+	// ErrTemporaryFailure is returned from Download when the download failed, like when it returns a 503.
+	ErrTemporaryFailure = errors.New("temporary failure")
 )
 
-const zipMagic = "PK\x03\x04"
+const (
+	zipMagic   = "PK\x03\x04"
+	maxRetries = 5
+	retryDelay = time.Millisecond * 500
+)
 
 // Client is an interface that can download a beatmap osz file.
 // It returns a ReadCloser that contains the osz file.
@@ -39,13 +50,47 @@ func NewDownloader(cl Client) *Downloader {
 	return &Downloader{cl}
 }
 
+func (d *Downloader) delayForRetry(retries int) time.Duration {
+	if retries < 0 {
+		retries = 0
+	}
+	if retries > maxRetries {
+		retries = maxRetries
+	}
+	return time.Duration(math.Pow(2, float64(retries))) * retryDelay
+}
+
 // Download downloads a beatmap set from the remote source using the
 // underlying downloaderClient, and checks that the downloaded file is a zip file.
 // If the file is not a zip file, errNoZip is returned.
+// If the underlying downloader returns an error wrapping ErrTemporaryFailure, the request is
+// retries up to maxRetries times with an exponential backoff.
 func (d *Downloader) Download(setID int, noVideo bool) (io.ReadCloser, error) {
-	body, err := d.Client.Download(setID, noVideo)
-	if err != nil {
-		return nil, err
+	var body io.ReadCloser
+	var err error
+	var retries int
+	var ok bool
+
+	var downstreamErr error
+	for !ok {
+		body, err = d.Client.Download(setID, noVideo)
+		if errors.Is(err, ErrTemporaryFailure) {
+			downstreamErr = errors.Join(downstreamErr, err)
+			if retries >= maxRetries {
+				return nil, fmt.Errorf("too many temporary failures, giving up. original error: %w", downstreamErr)
+			}
+			delay := d.delayForRetry(retries)
+			log.Printf("Temporary failure (%q), retrying in %v", err, delay)
+			time.Sleep(delay)
+			retries += 1
+			continue
+		}
+
+		if err != nil {
+			return nil, err
+		}
+
+		ok = true
 	}
 
 	// check that it is a zip file

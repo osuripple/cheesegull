@@ -80,6 +80,10 @@ func (c *BeatConnectClient) Download(setID int, noVideo bool) (io.ReadCloser, er
 	if err != nil {
 		return nil, fmt.Errorf("do request: %w", err)
 	}
+	if resp.StatusCode == http.StatusServiceUnavailable || resp.StatusCode == http.StatusBadGateway {
+		resp.Body.Close()
+		return nil, fmt.Errorf("%w: status %d", ErrTemporaryFailure, resp.StatusCode)
+	}
 	if resp.StatusCode != http.StatusOK {
 		resp.Body.Close()
 		return nil, fmt.Errorf("bad status code: %d", resp.StatusCode)
